@@ -135,9 +135,10 @@ public class BerTlvFile extends ElementaryFile {
                 } else {
                     // remove previous data, add new
                     byte[] data = new byte[wholelength];
+                    Record record = new Record(data);
                     Util.arrayCopyNonAtomic(buffer, offset, data, (short) 0, lengthToCopy);
                     deleteChildren(i);
-                    children[currentNumChildren++] = new Record(data);
+                    children[currentNumChildren++] = record;
                 }
                 return children[i];
             }

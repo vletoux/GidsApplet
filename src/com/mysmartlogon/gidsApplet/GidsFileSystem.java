@@ -544,8 +544,12 @@ public class GidsFileSystem extends ApplicationFile {
             ISOException.throwIt(ISO7816.SW_DATA_INVALID);
         } catch(NotEnoughSpaceException e) {
             ISOException.throwIt(ISO7816.SW_FILE_FULL);
+        } catch(SystemException e) {
+            if(e.getReason() == SystemException.NO_RESOURCE) {
+                ISOException.throwIt(ISO7816.SW_FILE_FULL);
+            }
+            ISOException.throwIt(ISO7816.SW_UNKNOWN);
         }
-
         return;
     }
 
@@ -668,6 +672,11 @@ public class GidsFileSystem extends ApplicationFile {
                 record = bertlvfile.addChildren(buf, ISO7816.OFFSET_CDATA, size, lc);
             } catch(NotEnoughSpaceException e) {
                 ISOException.throwIt(ISO7816.SW_FILE_FULL);
+            } catch(SystemException e) {
+                if(e.getReason() == SystemException.NO_RESOURCE) {
+                    ISOException.throwIt(ISO7816.SW_FILE_FULL);
+                }
+                ISOException.throwIt(ISO7816.SW_UNKNOWN);
             }
             transmitManager.setCachedRecord(record);
             transmitManager.setCachedOffset(lc);
@@ -700,6 +709,11 @@ public class GidsFileSystem extends ApplicationFile {
                 bertlvfile.addChildren(buf, ISO7816.OFFSET_CDATA, size, lc);
             } catch(NotEnoughSpaceException e) {
                 ISOException.throwIt(ISO7816.SW_FILE_FULL);
+            } catch(SystemException e) {
+                if(e.getReason() == SystemException.NO_RESOURCE) {
+                    ISOException.throwIt(ISO7816.SW_FILE_FULL);
+                }
+                ISOException.throwIt(ISO7816.SW_UNKNOWN);
             }
         }
         return;

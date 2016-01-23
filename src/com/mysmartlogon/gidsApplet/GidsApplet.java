@@ -29,6 +29,7 @@ import javacard.framework.ISO7816;
 import javacard.framework.ISOException;
 import javacard.framework.APDU;
 import javacard.framework.JCSystem;
+import javacard.framework.SystemException;
 import javacard.framework.Util;
 import javacard.security.KeyBuilder;
 import javacard.security.KeyPair;
@@ -430,6 +431,11 @@ public class GidsApplet extends Applet {
         } catch(CryptoException e) {
             if(e.getReason() == CryptoException.NO_SUCH_ALGORITHM) {
                 ISOException.throwIt(ISO7816.SW_FUNC_NOT_SUPPORTED);
+            }
+            ISOException.throwIt(ISO7816.SW_UNKNOWN);
+        } catch(SystemException e) {
+            if(e.getReason() == SystemException.NO_RESOURCE) {
+                ISOException.throwIt(ISO7816.SW_FILE_FULL);
             }
             ISOException.throwIt(ISO7816.SW_UNKNOWN);
         }
