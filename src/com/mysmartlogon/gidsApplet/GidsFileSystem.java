@@ -341,7 +341,6 @@ public class GidsFileSystem extends ApplicationFile {
         byte p1 = buf[ISO7816.OFFSET_P1];
         byte p2 = buf[ISO7816.OFFSET_P2];
         short lc;
-        short offset_cdata;
         short fid;
         File fileToSelect = null;
 
@@ -356,10 +355,6 @@ public class GidsFileSystem extends ApplicationFile {
 
             // Bytes received must be Lc.
             lc = apdu.setIncomingAndReceive();
-            if(lc != apdu.getIncomingLength()) {
-                ISOException.throwIt(ISO7816.SW_WRONG_LENGTH);
-            }
-            offset_cdata = apdu.getOffsetCdata();
 
             // Select the file.
             switch(p1) {
@@ -368,7 +363,7 @@ public class GidsFileSystem extends ApplicationFile {
                     fileToSelect = this;
                 } else if(lc == 2) {
                     // we have a FID
-                    fid = Util.makeShort(buf[offset_cdata], buf[(short)(offset_cdata+1)]);
+                    fid = Util.makeShort(buf[ISO7816.OFFSET_CDATA], buf[(short)(ISO7816.OFFSET_CDATA+1)]);
                     if (fid == AFDID) {
                         fileToSelect = this;
                     } else {
@@ -382,7 +377,7 @@ public class GidsFileSystem extends ApplicationFile {
                 break;
             case 0x04: /* by DF name */
                 try {
-                    fileToSelect = findDedicatedFileByName(buf, offset_cdata, lc);
+                    fileToSelect = findDedicatedFileByName(buf, ISO7816.OFFSET_CDATA, lc);
                 } catch(NotFoundException e) {
                     ISOException.throwIt(ISO7816.SW_FILE_NOT_FOUND);
                 }
@@ -475,9 +470,6 @@ public class GidsFileSystem extends ApplicationFile {
 
         // Bytes received must be Lc.
         lc = apdu.setIncomingAndReceive();
-        if(lc != apdu.getIncomingLength()) {
-            ISOException.throwIt(ISO7816.SW_WRONG_LENGTH);
-        }
 
         // One FID in DATA.
         if (lc == 0) {
@@ -531,7 +523,6 @@ public class GidsFileSystem extends ApplicationFile {
         byte p1 = buf[ISO7816.OFFSET_P1];
         byte p2 = buf[ISO7816.OFFSET_P2];
         short lc;
-        short offset_cdata;
 
         // Only P1P2 = 0000 supported.
         // (File identifier and parameters must be encoded in the command data field.)
@@ -541,14 +532,10 @@ public class GidsFileSystem extends ApplicationFile {
 
         // Bytes received must be Lc.
         lc = apdu.setIncomingAndReceive();
-        if(lc != apdu.getIncomingLength()) {
-            ISOException.throwIt(ISO7816.SW_WRONG_LENGTH);
-        }
-        offset_cdata = apdu.getOffsetCdata();
 
         try {
             // Add the file to the filesystem and select it.
-            File fileToAdd = getSafeFile(buf, offset_cdata, lc); // getSafeFile performs permission checks.
+            File fileToAdd = getSafeFile(buf, ISO7816.OFFSET_CDATA, lc); // getSafeFile performs permission checks.
             addFile(fileToAdd);
             selectFile(fileToAdd);
         } catch (NotFoundException e) {
@@ -568,21 +555,16 @@ public class GidsFileSystem extends ApplicationFile {
         byte ins = buf[ISO7816.OFFSET_INS];
         byte p1 = buf[ISO7816.OFFSET_P1];
         byte p2 = buf[ISO7816.OFFSET_P2];
-        short offset_cdata;
         short lc, pos = 0, len = 0, fileID;
         File file = null;
         BerTlvFile bertlvfile = null;
 
-        if (/*ins != 0xCA ||*/ ins != (byte) 0xCB) {
+        if (ins != (byte) 0xCB) {
             ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
         }
 
         // Bytes received must be Lc.
         lc = apdu.setIncomingAndReceive();
-        if(lc != apdu.getIncomingLength()) {
-            ISOException.throwIt(ISO7816.SW_WRONG_LENGTH);
-        }
-        offset_cdata = apdu.getOffsetCdata();
 
         if (p1 == 0x3F && p2 == (byte) 0xFF) {
             ISOException.throwIt(ISO7816.SW_DATA_INVALID);
@@ -615,7 +597,7 @@ public class GidsFileSystem extends ApplicationFile {
         try {
             // Extract the FID from the FCI which is passed to the FileXXX contructor and saved
             // separately for performance reasons.
-            pos = UtilTLV.findTag(buf, offset_cdata, (byte) lc, (byte) 0x5C);
+            pos = UtilTLV.findTag(buf, ISO7816.OFFSET_CDATA, (byte) lc, (byte) 0x5C);
             if (buf[(short)(pos+(short)1)] == (byte) 0) {
                 len = (short) 0;
             } else {
@@ -629,7 +611,7 @@ public class GidsFileSystem extends ApplicationFile {
             transmitManager.sendRecords(apdu, bertlvfile.getAllData());
         } else {
             try {
-                Record record = bertlvfile.getData(buf, (short)(pos+1+UtilTLV.getLengthFieldLength(buf, (short)(pos+1))), (short) (offset_cdata + lc));
+                Record record = bertlvfile.getData(buf, (short)(pos+1+UtilTLV.getLengthFieldLength(buf, (short)(pos+1))), (short) (ISO7816.OFFSET_CDATA + lc));
                 transmitManager.sendRecord(apdu,record);
             } catch (NotFoundException e) {
                 ISOException.throwIt(ErrorCode.SW_REFERENCE_DATA_NOT_FOUND);
@@ -643,7 +625,7 @@ public class GidsFileSystem extends ApplicationFile {
         byte ins = buf[ISO7816.OFFSET_INS];
         byte p1 = buf[ISO7816.OFFSET_P1];
         byte p2 = buf[ISO7816.OFFSET_P2];
-        short offset_cdata, lc;
+        short lc;
         short fileID;
         File file = null;
         BerTlvFile bertlvfile = null;
@@ -677,18 +659,13 @@ public class GidsFileSystem extends ApplicationFile {
 
         selectFile(bertlvfile);
         lc = apdu.setIncomingAndReceive();
-        if(lc != apdu.getIncomingLength()) {
-
-            ISOException.throwIt(ISO7816.SW_WRONG_LENGTH);
-        }
-        offset_cdata = apdu.getOffsetCdata();
 
         record = transmitManager.returnCachedRecord();
         if (record == null && TransmitManager.isCommandChainingCLA(apdu)) {
             // handle first chained APDU
-            size = UtilTLV.CheckBERTLV(buf, offset_cdata, (short) (offset_cdata + lc));
+            size = UtilTLV.CheckBERTLV(buf, ISO7816.OFFSET_CDATA, (short) (ISO7816.OFFSET_CDATA + lc));
             try {
-                record = bertlvfile.addChildren(buf, offset_cdata, size, lc);
+                record = bertlvfile.addChildren(buf, ISO7816.OFFSET_CDATA, size, lc);
             } catch(NotEnoughSpaceException e) {
                 ISOException.throwIt(ISO7816.SW_FILE_FULL);
             }
@@ -702,7 +679,7 @@ public class GidsFileSystem extends ApplicationFile {
                 transmitManager.clearCachedRecord();
                 ISOException.throwIt(ISO7816.SW_DATA_INVALID);
             }
-            Util.arrayCopyNonAtomic(buf, offset_cdata, data, offset, lc);
+            Util.arrayCopyNonAtomic(buf, ISO7816.OFFSET_CDATA, data, offset, lc);
             transmitManager.setCachedOffset((short) (offset + lc));
             if ((short) (offset + lc) == data.length) {
                 transmitManager.clearCachedRecord();
@@ -715,12 +692,12 @@ public class GidsFileSystem extends ApplicationFile {
             }
             // else wait for the next record
         } else {
-            size = UtilTLV.CheckBERTLV(buf, offset_cdata, (short) (offset_cdata + lc));
+            size = UtilTLV.CheckBERTLV(buf, ISO7816.OFFSET_CDATA, (short) (ISO7816.OFFSET_CDATA + lc));
             if (size <= 0) {
                 ISOException.throwIt(ISO7816.SW_DATA_INVALID);
             }
             try {
-                bertlvfile.addChildren(buf, offset_cdata, size, lc);
+                bertlvfile.addChildren(buf, ISO7816.OFFSET_CDATA, size, lc);
             } catch(NotEnoughSpaceException e) {
                 ISOException.throwIt(ISO7816.SW_FILE_FULL);
             }

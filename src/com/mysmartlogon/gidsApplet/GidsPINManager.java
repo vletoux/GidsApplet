@@ -193,7 +193,6 @@ public class GidsPINManager {
      */
     public void processVerify(APDU apdu) throws ISOException {
         byte[] buf = apdu.getBuffer();
-        short offset_cdata;
         short lc;
         GidsPIN pin = null;
 
@@ -214,13 +213,7 @@ public class GidsPINManager {
             ISOException.throwIt(ErrorCode.SW_REFERENCE_DATA_NOT_FOUND);
         }
 
-
-        // Bytes received must be Lc.
         lc = apdu.setIncomingAndReceive();
-        if(lc != apdu.getIncomingLength()) {
-            ISOException.throwIt(ISO7816.SW_WRONG_LENGTH);
-        }
-        offset_cdata = apdu.getOffsetCdata();
 
         if (pin.getTriesRemaining() == (byte) 0) {
             // pin blocked
@@ -244,7 +237,7 @@ public class GidsPINManager {
         }
 
         // Check the PIN.
-        if(!pin.check(buf, offset_cdata, (byte) lc)) {
+        if(!pin.check(buf, ISO7816.OFFSET_CDATA, (byte) lc)) {
             ISOException.throwIt((short)(ErrorCode.SW_PIN_TRIES_REMAINING | pin.getTriesRemaining()));
         } else {
 
@@ -267,15 +260,9 @@ public class GidsPINManager {
         byte p1 = buf[ISO7816.OFFSET_P1];
         byte p2 = buf[ISO7816.OFFSET_P2];
         short lc;
-        short offset_cdata;
         GidsPIN pin = null;
 
-        // Buffer verification.
         lc = apdu.setIncomingAndReceive();
-        if(lc != apdu.getIncomingLength()) {
-            ISOException.throwIt(ISO7816.SW_WRONG_LENGTH);
-        }
-        offset_cdata = apdu.getOffsetCdata();
 
         if (p1 == (byte) 0x01) {
             try {
@@ -294,7 +281,7 @@ public class GidsPINManager {
                 }
             }
             // Set PIN value
-            pin.update(buf, offset_cdata, (byte)lc);
+            pin.update(buf, ISO7816.OFFSET_CDATA, (byte)lc);
             if(isInInitializationMode) {
                 pin.resetAndUnblock();
             }
@@ -322,14 +309,14 @@ public class GidsPINManager {
                 ISOException.throwIt(ISO7816.SW_FILE_INVALID);
             }
             // Check the old PIN.
-            if(!pin.check(buf, offset_cdata, currentPinLength)) {
+            if(!pin.check(buf, ISO7816.OFFSET_CDATA, currentPinLength)) {
                 ISOException.throwIt((short)(ErrorCode.SW_PIN_TRIES_REMAINING | pin.getTriesRemaining()));
             }
             if(lc > (short)(pin.GetMaxPINSize() + currentPinLength) || lc < (short)(currentPinLength + pin.GetMinPINSize())) {
                 ISOException.throwIt(ISO7816.SW_WRONG_LENGTH);
             }
             // UPDATE PIN
-            pin.update(buf, (short) (offset_cdata+currentPinLength), (byte) (lc - currentPinLength));
+            pin.update(buf, (short) (ISO7816.OFFSET_CDATA+currentPinLength), (byte) (lc - currentPinLength));
             pin.setAsAuthenticated();
         } else {
             ISOException.throwIt(ISO7816.SW_INCORRECT_P1P2);
@@ -354,7 +341,6 @@ public class GidsPINManager {
         byte p1 = buf[ISO7816.OFFSET_P1];
         byte p2 = buf[ISO7816.OFFSET_P2];
         short lc;
-        short offset_cdata;
         GidsPIN pin = null;
 
         if(isInInitializationMode) {
@@ -363,12 +349,7 @@ public class GidsPINManager {
         if(p1 == (byte) 0x02) {
             // this suppose a previous authentication of the admin via
             // external or mutual authenticate
-            // Bytes received must be Lc.
             lc = apdu.setIncomingAndReceive();
-            if(lc != apdu.getIncomingLength()) {
-                ISOException.throwIt(ISO7816.SW_WRONG_LENGTH);
-            }
-            offset_cdata = apdu.getOffsetCdata();
             // only P2 = 80 is specified
             if (p2 != (byte) 0x80) {
                 ISOException.throwIt(ErrorCode.SW_REFERENCE_DATA_NOT_FOUND);
@@ -384,7 +365,7 @@ public class GidsPINManager {
             // Check length.
             pin.CheckLength((byte) lc);
             // Set PIN value
-            pin.update(buf, offset_cdata, (byte)lc);
+            pin.update(buf, ISO7816.OFFSET_CDATA, (byte)lc);
             pin.resetAndUnblock();
             // admin is deauthenticated at the end of the process
             DeauthenticateAllPin();
@@ -402,7 +383,6 @@ public class GidsPINManager {
         byte p1 = buf[ISO7816.OFFSET_P1];
         byte p2 = buf[ISO7816.OFFSET_P2];
         short lc;
-        short offset_cdata;
 
         if(isInInitializationMode) {
             ISOException.throwIt(ISO7816.SW_COMMAND_NOT_ALLOWED);
@@ -414,20 +394,16 @@ public class GidsPINManager {
 
         // Bytes received must be Lc.
         lc = apdu.setIncomingAndReceive();
-        if(lc != apdu.getIncomingLength()) {
-            ISOException.throwIt(ISO7816.SW_WRONG_LENGTH);
-        }
-        offset_cdata = apdu.getOffsetCdata();
 
         short innerPos = 0, innerLen = 0;
-        if (buf[offset_cdata] != (byte) 0x7C) {
+        if (buf[ISO7816.OFFSET_CDATA] != (byte) 0x7C) {
             ISOException.throwIt(ISO7816.SW_DATA_INVALID);
         }
 
 
         try {
-            innerLen = UtilTLV.decodeLengthField(buf, (short) (offset_cdata+1));
-            innerPos = (short) (offset_cdata + 1 + UtilTLV.getLengthFieldLength(buf, (short) (offset_cdata+1)));
+            innerLen = UtilTLV.decodeLengthField(buf, (short) (ISO7816.OFFSET_CDATA+1));
+            innerPos = (short) (ISO7816.OFFSET_CDATA + 1 + UtilTLV.getLengthFieldLength(buf, (short) (ISO7816.OFFSET_CDATA+1)));
         } catch (InvalidArgumentsException e1) {
             ISOException.throwIt(ISO7816.SW_DATA_INVALID);
         }

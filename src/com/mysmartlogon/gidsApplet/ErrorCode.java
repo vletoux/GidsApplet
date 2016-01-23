@@ -34,4 +34,5 @@ public interface ErrorCode {
     public static final short SW_COMMAND_NOT_ALLOWED_GENERAL = 0x6900;
     public static final short SW_TERMINATION_STATE = 0x6285;
     public static final short SW_COMMAND_INCOMPATIBLE_WITH_FILE_STRUCTURE = 0x6981;
+    public static final short SW_COMMAND_CHAINING_NOT_SUPPORTED = 0x6884;
 }

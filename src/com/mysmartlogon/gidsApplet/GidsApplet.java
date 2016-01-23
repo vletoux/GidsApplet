@@ -172,13 +172,13 @@ public class GidsApplet extends Applet {
         byte ins = buffer[ISO7816.OFFSET_INS];
 
         // No secure messaging at the moment
-        if(apdu.isSecureMessagingCLA()) {
+        if((buffer[ISO7816.OFFSET_CLA] & 0x0C) != 0) {
             ISOException.throwIt(ISO7816.SW_SECURE_MESSAGING_NOT_SUPPORTED);
         }
 
         transmitManager.processChainInitialization(apdu);
 
-        if(apdu.isISOInterindustryCLA()) {
+        if((buffer[ISO7816.OFFSET_CLA] & 0xE0) == 0) {
             switch (ins) {
             case INS_ACTIVATE_FILE:
                 fs.processActivateFile(apdu);
@@ -267,9 +267,6 @@ public class GidsApplet extends Applet {
             // get Applet information
             // Bytes received must be Lc.
             lc = apdu.setIncomingAndReceive();
-            if(lc != apdu.getIncomingLength()) {
-                ISOException.throwIt(ISO7816.SW_WRONG_LENGTH);
-            }
             // check for public key request
             // typically 00 CB 3F FF 0A 70 08 84 01 **81** A5 03 7F 49 80 00 (*keyref*)
             if (lc == (short) 10 && buf[5] == (byte) 0x70) {
@@ -305,9 +302,7 @@ public class GidsApplet extends Applet {
         } else if (p1 == 0x2F && p2 == (byte) 0x01) {
             // EF.ATR
             lc = apdu.setIncomingAndReceive();
-            if(lc != apdu.getIncomingLength()) {
-                ISOException.throwIt(ISO7816.SW_WRONG_LENGTH);
-            }
+
             // check for EF.ATR request
             // 00 CB 2F 01 02 5C 00 00
             if (lc == (short) 2 && buf[5] == (byte) 0x5C && buf[6] == (byte) 0x00) {
@@ -363,7 +358,7 @@ public class GidsApplet extends Applet {
         byte[] buf = apdu.getBuffer();
         byte p1 = buf[ISO7816.OFFSET_P1];
         byte p2 = buf[ISO7816.OFFSET_P2];
-        short lc, offset_cdata, pos, len, innerOffset, innerLength;
+        short lc, pos, len, innerOffset, innerLength;
         byte algID=0, keyID=0;
         CRTKeyFile file = null;
         KeyPair kp = null;
@@ -376,25 +371,21 @@ public class GidsApplet extends Applet {
 
         // Bytes received must be Lc.
         lc = apdu.setIncomingAndReceive();
-        if(lc != apdu.getIncomingLength()) {
-            ISOException.throwIt(ISO7816.SW_WRONG_LENGTH);
-        }
-        offset_cdata = apdu.getOffsetCdata();
 
         // TLV structure consistency check.
-        if( ! UtilTLV.isTLVconsistent(buf, offset_cdata, lc)) {
+        if( ! UtilTLV.isTLVconsistent(buf, ISO7816.OFFSET_CDATA, lc)) {
             ISOException.throwIt(ISO7816.SW_DATA_INVALID);
         }
 
         // length and length-field of outer FCI tag consistency check.
         try {
-            innerLength = UtilTLV.decodeLengthField(buf, (short)(offset_cdata+1));
-            if(innerLength != (short)(lc-1-UtilTLV.getLengthFieldLength(buf, (short)(offset_cdata+1)))) {
+            innerLength = UtilTLV.decodeLengthField(buf, (short)(ISO7816.OFFSET_CDATA+1));
+            if(innerLength != (short)(lc-1-UtilTLV.getLengthFieldLength(buf, (short)(ISO7816.OFFSET_CDATA+1)))) {
                 throw InvalidArgumentsException.getInstance();
             }
 
             // Let innerOffset point to the first inner TLV entry.
-            innerOffset = (short) (offset_cdata + 1 + UtilTLV.getLengthFieldLength(buf, (short)(offset_cdata+1)));
+            innerOffset = (short) (ISO7816.OFFSET_CDATA + 1 + UtilTLV.getLengthFieldLength(buf, (short)(ISO7816.OFFSET_CDATA+1)));
 
             // Now we check for the consistency of the lower level TLV entries.
             if( ! UtilTLV.isTLVconsistent(buf, innerOffset, innerLength) ) {
@@ -530,20 +521,15 @@ public class GidsApplet extends Applet {
         byte p2 = buf[ISO7816.OFFSET_P2];
         short lc;
         short pos = 0;
-        short offset_cdata;
         byte algRef = 0;
         byte privKeyRef = -1;
         CRTKeyFile crt = null;
 
         // Bytes received must be Lc.
         lc = apdu.setIncomingAndReceive();
-        if(lc != apdu.getIncomingLength()) {
-            ISOException.throwIt(ISO7816.SW_WRONG_LENGTH);
-        }
-        offset_cdata = apdu.getOffsetCdata();
 
         // TLV structure consistency check.
-        if( ! UtilTLV.isTLVconsistent(buf, offset_cdata, lc)) {
+        if( ! UtilTLV.isTLVconsistent(buf, ISO7816.OFFSET_CDATA, lc)) {
             ISOException.throwIt(ISO7816.SW_DATA_INVALID);
         }
 
@@ -554,7 +540,7 @@ public class GidsApplet extends Applet {
         case (byte) 0xC1:
             // Private key reference (Index in keys[]-array).
             try {
-                pos = UtilTLV.findTag(buf, offset_cdata, (byte) lc, (byte) 0x83);
+                pos = UtilTLV.findTag(buf, ISO7816.OFFSET_CDATA, (byte) lc, (byte) 0x83);
             } catch (Exception e) {
                 ISOException.throwIt(ISO7816.SW_DATA_INVALID);
             }
@@ -569,7 +555,7 @@ public class GidsApplet extends Applet {
 
             // Algorithm reference.
             try {
-                pos = UtilTLV.findTag(buf, offset_cdata, (byte) lc, (byte) 0x80);
+                pos = UtilTLV.findTag(buf, ISO7816.OFFSET_CDATA, (byte) lc, (byte) 0x80);
             } catch (NotFoundException e) {
                 ISOException.throwIt(ISO7816.SW_DATA_INVALID);
             } catch (InvalidArgumentsException e) {
@@ -583,7 +569,7 @@ public class GidsApplet extends Applet {
 
             // Private key reference (Index in keys[]-array).
             try {
-                pos = UtilTLV.findTag(buf, offset_cdata, (byte) lc, (byte) 0x84);
+                pos = UtilTLV.findTag(buf, ISO7816.OFFSET_CDATA, (byte) lc, (byte) 0x84);
             } catch (Exception e) {
                 ISOException.throwIt(ISO7816.SW_DATA_INVALID);
             }
@@ -741,7 +727,6 @@ public class GidsApplet extends Applet {
      */
     private void computeDigitalSignature(APDU apdu) throws ISOException {
         byte[] buf = apdu.getBuffer();
-        short offset_cdata;
         short lc, le;
         short sigLen = 0;
         PrivateKey rsaKey = null;
@@ -772,10 +757,6 @@ public class GidsApplet extends Applet {
             // Receive.
             // Bytes received must be Lc.
             lc = apdu.setIncomingAndReceive();
-            if(lc != apdu.getIncomingLength()) {
-                ISOException.throwIt(ISO7816.SW_WRONG_LENGTH);
-            }
-            offset_cdata = apdu.getOffsetCdata();
 
             // RSA signature operation.
             rsaKey = key.GetKey().getPrivate();
@@ -785,7 +766,7 @@ public class GidsApplet extends Applet {
             }
 
             rsaPkcs1Cipher.init(rsaKey, Cipher.MODE_ENCRYPT);
-            sigLen = rsaPkcs1Cipher.doFinal(buf, offset_cdata, lc, ram_buf, (short)0);
+            sigLen = rsaPkcs1Cipher.doFinal(buf, ISO7816.OFFSET_CDATA, lc, ram_buf, (short)0);
 
             /*if(sigLen != 256) {
                 ISOException.throwIt(ISO7816.SW_UNKNOWN);

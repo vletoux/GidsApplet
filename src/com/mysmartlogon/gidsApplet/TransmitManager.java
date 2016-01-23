@@ -116,7 +116,7 @@ public class TransmitManager {
             if( (ins != GidsApplet.INS_PERFORM_SECURITY_OPERATION
                     && ins != GidsApplet.INS_GENERATE_ASYMMETRIC_KEYPAIR
                     && ins != GidsApplet.INS_PUT_DATA)) {
-                ISOException.throwIt(ISO7816.SW_COMMAND_CHAINING_NOT_SUPPORTED);
+                ISOException.throwIt(ErrorCode.SW_COMMAND_CHAINING_NOT_SUPPORTED);
             }
 
             if(chaining_cache[RAM_CHAINING_CACHE_OFFSET_CURRENT_INS] == 0
@@ -163,16 +163,15 @@ public class TransmitManager {
     public short doChainingOrExtAPDU(APDU apdu) throws ISOException {
         byte[] buf = apdu.getBuffer();
         short recvLen = apdu.setIncomingAndReceive();
-        short offset_cdata = apdu.getOffsetCdata();
 
         // Receive data (short or extended).
         while (recvLen > 0) {
             if((short)(chaining_cache[RAM_CHAINING_CACHE_OFFSET_CURRENT_POS] + recvLen) > RAM_BUF_SIZE) {
                 ISOException.throwIt(ISO7816.SW_FILE_FULL);
             }
-            Util.arrayCopyNonAtomic(buf, offset_cdata, ram_buf, chaining_cache[RAM_CHAINING_CACHE_OFFSET_CURRENT_POS], recvLen);
+            Util.arrayCopyNonAtomic(buf, ISO7816.OFFSET_CDATA, ram_buf, chaining_cache[RAM_CHAINING_CACHE_OFFSET_CURRENT_POS], recvLen);
             chaining_cache[RAM_CHAINING_CACHE_OFFSET_CURRENT_POS] += recvLen;
-            recvLen = apdu.receiveBytes(offset_cdata);
+            recvLen = apdu.receiveBytes(ISO7816.OFFSET_CDATA);
         }
 
         if(isCommandChainingCLA(apdu)) {
