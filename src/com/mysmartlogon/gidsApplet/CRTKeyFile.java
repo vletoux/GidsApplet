@@ -57,7 +57,6 @@ public class CRTKeyFile extends ElementaryFile {
         }
     }
 
-    @Override
     void clearContents() {
         if (symmetricKey != null) {
             symmetricKey = null;

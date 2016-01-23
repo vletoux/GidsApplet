@@ -155,7 +155,6 @@ public class GidsApplet extends Applet {
     /**
      * \brief This method is called whenever the applet is being deselected.
      */
-    @Override
     public void deselect() {
         pinManager.DeauthenticateAllPin();
     }
@@ -167,7 +166,6 @@ public class GidsApplet extends Applet {
      *
      * \param apdu The incoming APDU.
      */
-    @Override
     public void process(APDU apdu) {
         byte buffer[] = apdu.getBuffer();
         byte ins = buffer[ISO7816.OFFSET_INS];

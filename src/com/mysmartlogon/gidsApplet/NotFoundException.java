@@ -32,7 +32,6 @@ package com.mysmartlogon.gidsApplet;
  *
  * \attention This singleton is not thread-safe.
  */
-@SuppressWarnings("serial")
 public class NotFoundException extends Exception {
     /**
      *

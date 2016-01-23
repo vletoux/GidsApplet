@@ -60,7 +60,6 @@ public class BerTlvFile extends ElementaryFile {
         this.currentNumChildren = 0;
     }
 
-    @Override
     void clearContents() {
         short i;
 

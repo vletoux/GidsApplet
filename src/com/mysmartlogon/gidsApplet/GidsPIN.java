@@ -71,7 +71,6 @@ public class GidsPIN extends OwnerPIN implements PIN {
         this.setValidatedFlag(true);
     }
 
-    @Override
     public void update(byte[] pin,
                        short offset,
                        byte length) {
