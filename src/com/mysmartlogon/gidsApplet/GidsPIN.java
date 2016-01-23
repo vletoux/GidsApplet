@@ -27,13 +27,14 @@ package com.mysmartlogon.gidsApplet;
 import javacard.framework.ISO7816;
 import javacard.framework.ISOException;
 import javacard.framework.OwnerPIN;
+import javacard.framework.PIN;
 
 /**
  * \brief The GidsPIN class.
  *
  */
 
-public class GidsPIN extends OwnerPIN {
+public class GidsPIN extends OwnerPIN implements PIN {
 
 
     private byte currentPINLen = 0;
