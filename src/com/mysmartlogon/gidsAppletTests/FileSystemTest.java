@@ -176,6 +176,8 @@ public class FileSystemTest extends GidsBaseTestClass {
         execute("00DBA01003DF240000");
         // check content
         execute("00CBA010045C02DF2400", "DF24009000");
+        // check content
+        execute("00CBA010045C02DF24", "DF24009000");
         // modify it
         execute("00DBA01005DF2402ABCD00");
         // check content

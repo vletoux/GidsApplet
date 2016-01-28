@@ -253,10 +253,15 @@ public class TransmitManager {
         short pos = chaining_cache[RAM_CHAINING_CACHE_OFFSET_CURRENT_POS];
 
         le = apdu.setOutgoing();
-        // no buffer requested ? end the transfert
-        if(le <= 0) {
-            Clear(true);
-            return;
+        // le has not been set
+        if(le == 0) {
+            // we get here when called from the Shared VMWare reader
+            byte ins = apdu.getBuffer()[ISO7816.OFFSET_INS];
+            if ( ins != GidsApplet.INS_GENERATE_ASYMMETRIC_KEYPAIR) {
+                le = 256;
+            } else {
+                le = 0;
+            }
         }
 
         if (chaining_object[CHAINING_OBJECT] == null) {

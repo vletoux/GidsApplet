@@ -749,7 +749,7 @@ public class GidsApplet extends Applet {
             sigLen = rsaRawCipher.doFinal(ram_buf, (short) 0, lc, ram_buf, (short)0);
             // A single short APDU can handle 256 bytes - only one send operation neccessary.
             le = apdu.setOutgoing();
-            if(le < sigLen) {
+            if(le > 0 && le < sigLen) {
                 ISOException.throwIt(ISO7816.SW_CORRECT_LENGTH_00);
             }
             apdu.setOutgoingLength(sigLen);
@@ -778,7 +778,7 @@ public class GidsApplet extends Applet {
 
             // A single short APDU can handle 256 bytes - only one send operation neccessary.
             le = apdu.setOutgoing();
-            if(le < sigLen) {
+            if(le > 0 && le < sigLen) {
                 ISOException.throwIt(ISO7816.SW_CORRECT_LENGTH_00);
             }
             apdu.setOutgoingLength(sigLen);
