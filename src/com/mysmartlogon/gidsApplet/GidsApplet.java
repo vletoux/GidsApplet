@@ -35,6 +35,7 @@ import javacard.security.KeyBuilder;
 import javacard.security.KeyPair;
 import javacard.security.PrivateKey;
 import javacard.security.PublicKey;
+import javacard.security.RSAPrivateCrtKey;
 import javacard.security.RSAPublicKey;
 import javacardx.crypto.Cipher;
 import javacard.security.CryptoException;
@@ -426,6 +427,15 @@ public class GidsApplet extends Applet {
                 break;
             }
             kp.genKeyPair();
+            
+            // special Feitian workaround for A40CR and A22CR cards
+            RSAPrivateCrtKey priKey = (RSAPrivateCrtKey) kp.getPrivate();
+            short pLen = priKey.getP(buf, (short) 0);
+            priKey.setP(buf, (short) 0, pLen);
+            short qLen = priKey.getQ(buf, (short) 0);
+            priKey.setQ(buf, (short) 0, qLen);
+            // end of workaround
+            
         } catch(CryptoException e) {
             if(e.getReason() == CryptoException.NO_SUCH_ALGORITHM) {
                 ISOException.throwIt(ISO7816.SW_FUNC_NOT_SUPPORTED);
