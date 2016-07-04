@@ -28,18 +28,23 @@ import javacard.framework.APDU;
 import javacard.framework.ISO7816;
 import javacard.framework.ISOException;
 import javacard.framework.JCSystem;
+import javacard.framework.SystemException;
 import javacard.framework.Util;
 
 public class TransmitManager {
 
     // a ram buffer for public key export (no need to allocate flash !)
-    private static final short RAM_BUF_SIZE = (short) 1220;
+    // memory buffer size is determined by copyRecordsToRamBuf=min 512
+    private static final short RAM_BUF_SIZE = (short) 530;
+    private static final short FLASH_BUF_SIZE = (short) 1220;
     private byte[] ram_buf = null;
     // internal variables to do chaining
     private short[] chaining_cache = null;
     // store special object to returns or if null, use the ram buffer
     private Object[] chaining_object = null;
 
+    private byte[] flash_buf = null;
+    
     // number of variables for the cache
     private static final short CHAINING_CACHE_SIZE = (short) 6;
     // index of the object (when sending Record[])
@@ -78,9 +83,26 @@ public class TransmitManager {
     public byte[] GetRamBuffer() {
         return ram_buf;
     }
+    
+    public byte[] GetFlashBuffer()
+    {
+        return flash_buf;
+    }
 
     public void ClearRamBuffer() {
         Clear(true);
+    }
+    
+    public void ClearFlashBuffer() {
+        if (flash_buf != null)
+        {
+            if(JCSystem.isObjectDeletionSupported()) {
+                flash_buf = null;
+                JCSystem.requestObjectDeletion();
+            } else {
+                Util.arrayFillNonAtomic(flash_buf, (short)0, FLASH_BUF_SIZE, (byte)0x00);
+            }
+        }
     }
 
     /**
@@ -161,15 +183,35 @@ public class TransmitManager {
      * \throw ISOException SW_WRONG_LENGTH
      */
     public short doChainingOrExtAPDU(APDU apdu) throws ISOException {
-        byte[] buf = apdu.getBuffer();
+        return doChainingOrExtAPDUWithBuffer(apdu, ram_buf, RAM_BUF_SIZE);
+    }
+    
+    public short doChainingOrExtAPDUFlash(APDU apdu) throws ISOException {
+        // allocate flash buffer only when needed - it can remain for the rest of the card life
+        if (flash_buf == null)
+        {
+            try {
+                flash_buf = new byte[FLASH_BUF_SIZE];
+            } catch(SystemException e) {
+                if(e.getReason() == SystemException.NO_RESOURCE) {
+                    ISOException.throwIt(ISO7816.SW_FILE_FULL);
+                }
+                ISOException.throwIt(ISO7816.SW_UNKNOWN);
+            }
+        }
+        return doChainingOrExtAPDUWithBuffer(apdu, flash_buf, FLASH_BUF_SIZE);
+    }
+    
+    private short doChainingOrExtAPDUWithBuffer(APDU apdu, byte[] databuffer, short bufferlen) throws ISOException {
+        
         short recvLen = apdu.setIncomingAndReceive();
-
+        byte[] buf = apdu.getBuffer();
         // Receive data (short or extended).
         while (recvLen > 0) {
-            if((short)(chaining_cache[RAM_CHAINING_CACHE_OFFSET_CURRENT_POS] + recvLen) > RAM_BUF_SIZE) {
+            if((short)(chaining_cache[RAM_CHAINING_CACHE_OFFSET_CURRENT_POS] + recvLen) > bufferlen) {
                 ISOException.throwIt(ISO7816.SW_FILE_FULL);
             }
-            Util.arrayCopyNonAtomic(buf, ISO7816.OFFSET_CDATA, ram_buf, chaining_cache[RAM_CHAINING_CACHE_OFFSET_CURRENT_POS], recvLen);
+            Util.arrayCopyNonAtomic(buf, ISO7816.OFFSET_CDATA, databuffer, chaining_cache[RAM_CHAINING_CACHE_OFFSET_CURRENT_POS], recvLen);
             chaining_cache[RAM_CHAINING_CACHE_OFFSET_CURRENT_POS] += recvLen;
             recvLen = apdu.receiveBytes(ISO7816.OFFSET_CDATA);
         }
@@ -213,8 +255,8 @@ public class TransmitManager {
         while (records[index] != null) {
             byte[] data = records[index].GetData();
             short dataToCopy = (short)(data.length - pos);
-            if (dataToCopy > 512) {
-                dataToCopy = 512;
+            if ((short)(dataToCopy + dataCopied) > 512) {
+                dataToCopy = (short) (512 - dataCopied);
             }
             Util.arrayCopyNonAtomic(data, pos, ram_buf, dataCopied, dataToCopy);
             if ((short) (dataCopied + dataToCopy) == le) {

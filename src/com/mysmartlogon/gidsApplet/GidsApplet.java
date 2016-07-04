@@ -35,6 +35,7 @@ import javacard.security.KeyBuilder;
 import javacard.security.KeyPair;
 import javacard.security.PrivateKey;
 import javacard.security.PublicKey;
+import javacard.security.RSAPrivateCrtKey;
 import javacard.security.RSAPublicKey;
 import javacardx.crypto.Cipher;
 import javacard.security.CryptoException;
@@ -426,6 +427,15 @@ public class GidsApplet extends Applet {
                 break;
             }
             kp.genKeyPair();
+            
+            // special Feitian workaround for A40CR and A22CR cards
+            RSAPrivateCrtKey priKey = (RSAPrivateCrtKey) kp.getPrivate();
+            short pLen = priKey.getP(buf, (short) 0);
+            priKey.setP(buf, (short) 0, pLen);
+            short qLen = priKey.getQ(buf, (short) 0);
+            priKey.setQ(buf, (short) 0, qLen);
+            // end of workaround
+            
         } catch(CryptoException e) {
             if(e.getReason() == CryptoException.NO_SUCH_ALGORITHM) {
                 ISOException.throwIt(ISO7816.SW_FUNC_NOT_SUPPORTED);
@@ -766,7 +776,7 @@ public class GidsApplet extends Applet {
             if(lc > (short) 247) {
                 ISOException.throwIt(ISO7816.SW_WRONG_LENGTH);
             }
-
+            
             rsaPkcs1Cipher.init(rsaKey, Cipher.MODE_ENCRYPT);
             sigLen = rsaPkcs1Cipher.doFinal(buf, ISO7816.OFFSET_CDATA, lc, ram_buf, (short)0);
 
@@ -826,57 +836,70 @@ public class GidsApplet extends Applet {
         short recvLen;
         short len = 0, pos = 0;
         short innerPos = 0, innerLen = 0;
-        byte[] ram_buf = transmitManager.GetRamBuffer();
+        byte[] flash_buf = null;
         byte privKeyRef = -1;
         CRTKeyFile crt = null;
 
         if( ! DEF_PRIVATE_KEY_IMPORT_ALLOWED) {
             ISOException.throwIt(ErrorCode.SW_COMMAND_NOT_ALLOWED_GENERAL);
         }
-
-        recvLen = transmitManager.doChainingOrExtAPDU(apdu);
-
-        try {
-            innerPos = UtilTLV.findTag(ram_buf, (short) 0, recvLen, (byte) 0x70);
-            innerLen = UtilTLV.decodeLengthField(ram_buf, (short)(innerPos+1));
-            innerPos += 1 + UtilTLV.getLengthFieldLength(ram_buf, (short)(innerPos+1));
-        } catch (Exception e) {
-            ISOException.throwIt(ISO7816.SW_DATA_INVALID);
-        }
-
-        try {
-            pos = UtilTLV.findTag(ram_buf, innerPos, innerLen, (byte) 0x84);
-            len = UtilTLV.decodeLengthField(ram_buf, (short)(innerPos+1));
-            if (len != 1) {
+        try
+        {
+            // flash buffer is allocated in the next instruction
+            recvLen = transmitManager.doChainingOrExtAPDUFlash(apdu);
+            // if these 2 lines are reversed, flash_buf can be null
+            flash_buf = transmitManager.GetFlashBuffer();
+            
+            try {
+                innerPos = UtilTLV.findTag(flash_buf, (short) 0, recvLen, (byte) 0x70);
+                innerLen = UtilTLV.decodeLengthField(flash_buf, (short)(innerPos+1));
+                innerPos += 1 + UtilTLV.getLengthFieldLength(flash_buf, (short)(innerPos+1));
+            } catch (Exception e) {
                 ISOException.throwIt(ISO7816.SW_DATA_INVALID);
             }
-            privKeyRef = ram_buf[(short) (pos+2)];
-        } catch (Exception e) {
-            ISOException.throwIt(ISO7816.SW_DATA_INVALID);
+    
+            try {
+                pos = UtilTLV.findTag(flash_buf, innerPos, innerLen, (byte) 0x84);
+                len = UtilTLV.decodeLengthField(flash_buf, (short)(innerPos+1));
+                if (len != 1) {
+                    ISOException.throwIt(ISO7816.SW_DATA_INVALID);
+                }
+                privKeyRef = flash_buf[(short) (pos+2)];
+            } catch (Exception e) {
+                ISOException.throwIt(ISO7816.SW_DATA_INVALID);
+            }
+            try {
+                pos = UtilTLV.findTag(flash_buf, innerPos, innerLen, (byte) 0xA5);
+                len = UtilTLV.decodeLengthField(flash_buf, (short)(innerPos+1));
+            } catch (Exception e) {
+                ISOException.throwIt(ISO7816.SW_DATA_INVALID);
+            }
+            if(privKeyRef == -1) {
+                ISOException.throwIt(ISO7816.SW_DATA_INVALID);
+            }
+            try {
+                crt = fs.findKeyCRT(privKeyRef);
+            } catch (NotFoundException e) {
+                ISOException.throwIt(ISO7816.SW_DATA_INVALID);
+            }
+    
+            crt.CheckPermission(pinManager, File.ACL_OP_KEY_PUTKEY);
+    
+            try {
+                crt.importKey(flash_buf, pos, len);
+            } catch (InvalidArgumentsException e) {
+                ISOException.throwIt(ISO7816.SW_DATA_INVALID);
+            }
+            // clear ressource and avoid leaking a private key in flash (if the private key is deleted after)
+            transmitManager.ClearFlashBuffer();
+        } catch(ISOException e) {
+            if (e.getReason() != ISO7816.SW_NO_ERROR) {                
+                // clear ressource and avoid leaking a private key in flash (if the private key is deleted after)
+                transmitManager.ClearFlashBuffer();
+            }
+            throw e;
         }
-        try {
-            pos = UtilTLV.findTag(ram_buf, innerPos, innerLen, (byte) 0xA5);
-            len = UtilTLV.decodeLengthField(ram_buf, (short)(innerPos+1));
-        } catch (Exception e) {
-            ISOException.throwIt(ISO7816.SW_DATA_INVALID);
-        }
-        if(privKeyRef == -1) {
-            ISOException.throwIt(ISO7816.SW_DATA_INVALID);
-        }
-        try {
-            crt = fs.findKeyCRT(privKeyRef);
-        } catch (NotFoundException e) {
-            ISOException.throwIt(ISO7816.SW_DATA_INVALID);
-        }
-
-        crt.CheckPermission(pinManager, File.ACL_OP_KEY_PUTKEY);
-
-        try {
-            crt.importKey(ram_buf, pos, len);
-        } catch (InvalidArgumentsException e) {
-            ISOException.throwIt(ISO7816.SW_DATA_INVALID);
-        }
-
+        
     }
 
 } // class GidsApplet
