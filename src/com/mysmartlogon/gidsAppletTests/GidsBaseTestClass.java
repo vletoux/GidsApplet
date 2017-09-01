@@ -3,6 +3,8 @@ package com.mysmartlogon.gidsAppletTests;
 import static org.junit.Assert.*;
 
 import java.util.Arrays;
+import java.util.Date;
+import java.util.Random;
 
 import javax.smartcardio.CommandAPDU;
 import javax.smartcardio.ResponseAPDU;
@@ -97,12 +99,11 @@ public abstract class GidsBaseTestClass {
 
     protected void authenticateMutual(byte[] key, boolean successexpected) {
         byte[] myChallenge= new byte [16], globalchallenge = new byte[40], challengeresponse = new byte[40];
-        byte[] challenge;
+        byte[] cardChallenge;
         Cipher cipherDES = Cipher.getInstance(Cipher.ALG_DES_CBC_NOPAD, false);
         DESKey deskey = (DESKey) KeyBuilder.buildKey(KeyBuilder.TYPE_DES, KeyBuilder.LENGTH_DES3_3KEY, false);
         deskey.setKey(key, (short) 0);
-        RandomData randomData = RandomData.getInstance(RandomData.ALG_SECURE_RANDOM);
-        randomData.generateData(myChallenge, (short) 0, (short) myChallenge.length);
+        new Random().nextBytes(myChallenge);
         // select admin key
         execute("00 22 81 A4 03 83 01 80");
         // get a challenge
@@ -111,18 +112,52 @@ public abstract class GidsBaseTestClass {
             fail("not a challenge:" + DatatypeConverter.printHexBinary(response.getBytes()));
         }
         // compute the response
-        challenge = Arrays.copyOfRange(response.getBytes(), 4, 20);
+        cardChallenge = Arrays.copyOfRange(response.getBytes(), 4, 20);
         //solve challenge
         //R2
-        System.arraycopy(challenge, 0, globalchallenge, 0, 16);
+        System.arraycopy(cardChallenge, 0, globalchallenge, 0, 16);
         //R1
         System.arraycopy(myChallenge, 0, globalchallenge, 16, 16);
         // keep Z1 random
-
+        globalchallenge[(short)39] = (byte) 0x80;
         cipherDES.init(deskey, Cipher.MODE_ENCRYPT);
         cipherDES.doFinal(globalchallenge, (short) 0, (short)40, challengeresponse, (short) 0);
         // send the response
-        execute("00 87 00 00 2C 7C 2A 82 28" + DatatypeConverter.printHexBinary(challengeresponse), (successexpected?0x9000: 0x6982));
+        String command = "00 87 00 00 2C 7C 2A 82 28" + DatatypeConverter.printHexBinary(challengeresponse);
+        
+        ResponseAPDU responseAPDU = execute(command, true);
+        
+        if (!successexpected)
+        {
+            if(responseAPDU.getSW() != 0x6982) {
+                fail("expected: " + Integer.toHexString(0x6982) + " but was: " + Integer.toHexString(response.getSW()));
+            }
+            return;
+        }
+        if(responseAPDU.getSW() != 0x9000) {
+            fail("expected: " + Integer.toHexString(0x9000) + " but was: " + Integer.toHexString(response.getSW()));
+        }
+        byte[] cardresponse = responseAPDU.getBytes();
+        if (!Arrays.equals(Arrays.copyOfRange(cardresponse, 0, 4), new byte[] {0x7C,0x2A,(byte)0x82,0x28}))
+        {
+            fail("header verification failed");
+        }
+        byte[] decryptedCardResponse = new byte[40];
+        cipherDES.init(deskey, Cipher.MODE_DECRYPT);
+        cipherDES.doFinal(cardresponse, (short) 4, (short)40, decryptedCardResponse, (short) 0);
+       
+        
+        if (!Arrays.equals(Arrays.copyOfRange(decryptedCardResponse, 0, 16), myChallenge)) {
+            fail("R1 verification failed");
+        }
+        
+        if (!Arrays.equals(Arrays.copyOfRange(decryptedCardResponse, 16, 32), cardChallenge)) {
+            fail("R2 verification failed");
+        }
+        if (decryptedCardResponse[(short)39] != (byte) 0x80) {
+            fail("padding failed");
+        }
+        
     }
 
     protected void authenticateGeneral(byte[] key, boolean successexpected) {

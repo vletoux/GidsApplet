@@ -463,6 +463,7 @@ public class GidsPINManager {
             ISOException.throwIt(ISO7816.SW_DATA_INVALID);
         }
         RandomData randomData = RandomData.getInstance(RandomData.ALG_SECURE_RANDOM);
+        randomData.setSeed(buf, pos, len);
         randomData.generateData(CardChallenge, (short) 0, len);
 
         pos = 0;
@@ -494,6 +495,10 @@ public class GidsPINManager {
             ISOException.throwIt(ISO7816.SW_DATA_INVALID);
         }
         if (status[0] == MUTUAL_CHALLENGE) {
+            if (len != (short) 40) {
+                ClearChallengeData();
+                ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
+            }
             Cipher cipherDES = Cipher.getInstance(Cipher.ALG_DES_CBC_NOPAD, false);
             DESKey key = (DESKey) KeyBuilder.buildKey(KeyBuilder.TYPE_DES, KeyBuilder.LENGTH_DES3_3KEY, false);
             key.setKey(((CRTKeyFile)(KeyReference[0])).GetSymmectricKey(), (short) 0);
@@ -510,23 +515,43 @@ public class GidsPINManager {
                 ClearChallengeData();
                 ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
             }
-            Util.arrayCopy(buffer, (short) 32, sharedKey, (short) 0, (short) (len - 32));
+            // check the padding of Z1 (7 bytes)
+            if (buffer[(short)39] != (byte) 0x80) {
+                ClearChallengeData();
+                ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
+            }
+            // copy Z1 for later use
+            Util.arrayCopy(buffer, (short) 32, sharedKey, (short) 0, (short) 7);
 
+            // generate Z2
             RandomData randomData = RandomData.getInstance(RandomData.ALG_SECURE_RANDOM);
-            randomData.generateData(sharedKey, (short) (len - 32), (short) (len - 32));
+            randomData.generateData(sharedKey, (short) 7, (short) 7);
 
-            Util.arrayCopy(buffer, (short) 32, sharedKey, (short) (len - 32), (short) (len - 32));
+            // copy R1
+            Util.arrayCopy(ExternalChallenge, (short) 0, buffer, (short) 0, (short) 16);
+            // copy R2
+            Util.arrayCopy(CardChallenge, (short) 0, buffer, (short) 16, (short) 16);
+            // copy Z2
+            Util.arrayCopy(sharedKey, (short) 7, buffer, (short) 32, (short) 7);
+            // set padding for Z2 (7 bytes)
+            buffer[(short) 39] = (byte) 0x80;
 
             cipherDES.init(key, Cipher.MODE_ENCRYPT);
-            cipherDES.doFinal(buffer, (short) 0, len, buf, (short) 0);
+            cipherDES.doFinal(buffer, (short) 0, (short)40, buf, (short) 4);
 
+            // header
+            buf[0] = (byte) 0x7C;
+            buf[1] = (byte) 0x2A;
+            buf[2] = (byte) 0x82;
+            buf[3] = (byte) 0x28;
+            
             // avoid replay attack
             ClearChallengeData();
             status[0] = MUTUAL_AUTHENTICATED;
 
             apdu.setOutgoing();
-            apdu.setOutgoingLength(len);
-            apdu.sendBytes((short) 0, len);
+            apdu.setOutgoingLength((short)44);
+            apdu.sendBytes((short) 0, (short)44);
         } else if (status[0] == EXTERNAL_CHALLENGE) {
             Cipher cipherDES = Cipher.getInstance(Cipher.ALG_DES_CBC_NOPAD, false);
             DESKey key = (DESKey) KeyBuilder.buildKey(KeyBuilder.TYPE_DES, KeyBuilder.LENGTH_DES3_3KEY, false);

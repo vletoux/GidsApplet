@@ -168,7 +168,7 @@ public class PinTests extends GidsBaseTestClass {
         //R1
         System.arraycopy(myChallenge, 0, globalchallenge, 16, 16);
         // keep Z1 random
-
+        globalchallenge[(short)39] = (byte) 0x80;
         cipherDES.init(deskey, Cipher.MODE_ENCRYPT);
         cipherDES.doFinal(globalchallenge, (short) 0, (short)40, challengeresponse, (short) 0);
         // send the response
