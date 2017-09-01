@@ -1,0 +1,16 @@
+mode_211
+enable_trace
+
+establish_context
+card_connect
+# specifiy our card manager
+select -AID a000000003000000
+# put our card manager keys here
+open_sc -security 1 -keyind 0 -keyver 0 -mac_key <INSERT CARD KEY HERE> -enc_key <INSERT CARD KEY HERE>
+
+delete -AID A000000397425446590201
+delete -AID A00000039742544659
+
+install -file .\GidsApplet.cap -instParam 00 -priv 00
+card_disconnect
+release_context
