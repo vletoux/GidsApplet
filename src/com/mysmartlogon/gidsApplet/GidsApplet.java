@@ -151,6 +151,8 @@ public class GidsApplet extends Applet {
 
         // FCI / FMD / FCP are hard coded
         register();
+
+        pinManager.SetApplicationState(GidsPINManager.INITIALIZATION_STATE);
     }
 
     /**
@@ -246,6 +248,7 @@ public class GidsApplet extends Applet {
 
         fs.CheckPermission(pinManager, File.ACL_OP_DF_TERMINATE);
         // kill me
+        pinManager.SetApplicationState(GidsPINManager.TERMINATION_STATE);
         fs.setState(File.STATE_TERMINATED);
     }
 

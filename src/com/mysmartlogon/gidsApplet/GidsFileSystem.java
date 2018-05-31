@@ -740,7 +740,7 @@ public class GidsFileSystem extends ApplicationFile {
         file.setState(STATE_OPERATIONAL_ACTIVATED);
 
         if (file == this) {
-            pinManager.SetInitializationMode(false);
+            pinManager.SetApplicationState(GidsPINManager.OPERATIONAL_STATE);
         }
 
     }
