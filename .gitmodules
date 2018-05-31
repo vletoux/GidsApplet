@@ -1,0 +1,3 @@
+[submodule "libs-sdks"]
+	path = libs-sdks
+	url = https://github.com/martinpaljak/oracle_javacard_sdks.git
