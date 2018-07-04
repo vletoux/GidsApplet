@@ -8,15 +8,7 @@ before_script:
    - cd jckit
    - "[ -f java_card_kit-2_2_1-linux-dom.zip ] || curl -L http://download.oracle.com/otn-pub/java/java_card_kit/2.2.1/java_card_kit-2_2_1-linux-dom.zip -o java_card_kit-2_2_1-linux-dom.zip --cookie oraclelicense=accept-securebackup-cookie"
    - unzip java_card_kit-2_2_1-linux-dom.zip
-   - cd java_card_kit-2_2_1/
-   - cd ../..
-   - mkdir ext
-   - cd ext
-   - mkdir ant
-   - cd ant
-   - "[ -f ant-javacard.jar ] || curl -L https://github.com/martinpaljak/ant-javacard/releases/download/v1.3/ant-javacard.jar -o ant-javacard.jar"
-   - cd ../..
-   - CLASSPATH=$CLASSPATH:$JC_HOME/lib
+   - cd ..
 
 script: ant dist
 

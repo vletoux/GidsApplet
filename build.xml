@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="Gids Applet" default="dist" basedir=".">
   <description>Builds the project. </description>
+  <get src="https://github.com/martinpaljak/ant-javacard/releases/download/18.06.25/ant-javacard.jar" dest="." skipexisting="true"/>
+  <taskdef name="javacard" classname="pro.javacard.ant.JavaCard" classpath="ant-javacard.jar"/>
   <target name="dist" description="generate the distribution">
     <tstamp/>
    
     <!-- Create the distribution directory -->
-    <taskdef name="javacard" classname="pro.javacard.ant.JavaCard" classpath="ext/ant/ant-javacard.jar"/>
     <javacard>
      <cap aid="A0:00:00:03:97:42:54:46:59" output="GidsApplet.cap" sources="src/com/mysmartlogon/gidsApplet" version="1.0">
         <applet class="com.mysmartlogon.gidsApplet.GidsApplet" aid="A0:00:00:03:97:42:54:46:59:02:01"/>
