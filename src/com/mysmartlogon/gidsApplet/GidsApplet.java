@@ -766,13 +766,8 @@ public class GidsApplet extends Applet {
 
             rsaRawCipher.init(rsaKey, Cipher.MODE_ENCRYPT);
             sigLen = rsaRawCipher.doFinal(ram_buf, (short) 0, lc, ram_buf, (short)0);
-            // A single short APDU can handle 256 bytes - only one send operation neccessary.
-            le = apdu.setOutgoing();
-            if(le > 0 && le < sigLen) {
-                ISOException.throwIt(ISO7816.SW_CORRECT_LENGTH_00);
-            }
-            apdu.setOutgoingLength(sigLen);
-            apdu.sendBytesLong(ram_buf, (short) 0, sigLen);
+
+            transmitManager.sendDataFromRamBuffer(apdu, (short)0, sigLen);
             break;
         case (byte) 0x50:
             // rsa padding made by the card, only the hash is provided
@@ -795,13 +790,7 @@ public class GidsApplet extends Applet {
                 ISOException.throwIt(ISO7816.SW_UNKNOWN);
             }*/
 
-            // A single short APDU can handle 256 bytes - only one send operation neccessary.
-            le = apdu.setOutgoing();
-            if(le > 0 && le < sigLen) {
-                ISOException.throwIt(ISO7816.SW_CORRECT_LENGTH_00);
-            }
-            apdu.setOutgoingLength(sigLen);
-            apdu.sendBytesLong(ram_buf, (short) 0, sigLen);
+            transmitManager.sendDataFromRamBuffer(apdu, (short)0, sigLen);
             break;
 
         default:
