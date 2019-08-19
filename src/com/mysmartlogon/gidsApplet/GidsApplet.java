@@ -74,6 +74,9 @@ public class GidsApplet extends Applet {
     public static final byte INS_ACTIVATE_FILE = (byte) 0x44;
     public static final byte INS_TERMINATE_DF = (byte) 0xE6;
 
+    public static final short LENGTH_RSA_3072 = (short) 3072;
+    public static final short LENGTH_RSA_4096 = (short) 4096;
+
     private GidsPINManager pinManager = null;
 
 
@@ -421,6 +424,12 @@ public class GidsApplet extends Applet {
                 break;
             case (byte)0x07:
                 kp = new KeyPair(KeyPair.ALG_RSA_CRT, KeyBuilder.LENGTH_RSA_2048);
+                break;
+            case (byte)0x08:
+                kp = new KeyPair(KeyPair.ALG_RSA_CRT, LENGTH_RSA_3072);
+                break;
+            case (byte)0x09:
+                kp = new KeyPair(KeyPair.ALG_RSA_CRT, LENGTH_RSA_4096);
                 break;
             default:
                 ISOException.throwIt(ISO7816.SW_FUNC_NOT_SUPPORTED);
