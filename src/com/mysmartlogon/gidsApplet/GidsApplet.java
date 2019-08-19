@@ -438,11 +438,13 @@ public class GidsApplet extends Applet {
             kp.genKeyPair();
             
             // special Feitian workaround for A40CR and A22CR cards
-            RSAPrivateCrtKey priKey = (RSAPrivateCrtKey) kp.getPrivate();
-            short pLen = priKey.getP(buf, (short) 0);
-            priKey.setP(buf, (short) 0, pLen);
-            short qLen = priKey.getQ(buf, (short) 0);
-            priKey.setQ(buf, (short) 0, qLen);
+            // but it breaks J3H145 :(
+            //
+            // RSAPrivateCrtKey priKey = (RSAPrivateCrtKey) kp.getPrivate();
+            // short pLen = priKey.getP(buf, (short) 0);
+            // priKey.setP(buf, (short) 0, pLen);
+            // short qLen = priKey.getQ(buf, (short) 0);
+            // priKey.setQ(buf, (short) 0, qLen);
             // end of workaround
             
         } catch(CryptoException e) {
