@@ -74,6 +74,9 @@ public class GidsApplet extends Applet {
     public static final byte INS_ACTIVATE_FILE = (byte) 0x44;
     public static final byte INS_TERMINATE_DF = (byte) 0xE6;
 
+    public static final short LENGTH_RSA_3072 = (short) 3072;
+    public static final short LENGTH_RSA_4096 = (short) 4096;
+
     private GidsPINManager pinManager = null;
 
 
@@ -422,6 +425,12 @@ public class GidsApplet extends Applet {
             case (byte)0x07:
                 kp = new KeyPair(KeyPair.ALG_RSA_CRT, KeyBuilder.LENGTH_RSA_2048);
                 break;
+            case (byte)0x08:
+                kp = new KeyPair(KeyPair.ALG_RSA_CRT, LENGTH_RSA_3072);
+                break;
+            case (byte)0x09:
+                kp = new KeyPair(KeyPair.ALG_RSA_CRT, LENGTH_RSA_4096);
+                break;
             default:
                 ISOException.throwIt(ISO7816.SW_FUNC_NOT_SUPPORTED);
                 break;
@@ -429,11 +438,13 @@ public class GidsApplet extends Applet {
             kp.genKeyPair();
             
             // special Feitian workaround for A40CR and A22CR cards
-            RSAPrivateCrtKey priKey = (RSAPrivateCrtKey) kp.getPrivate();
-            short pLen = priKey.getP(buf, (short) 0);
-            priKey.setP(buf, (short) 0, pLen);
-            short qLen = priKey.getQ(buf, (short) 0);
-            priKey.setQ(buf, (short) 0, qLen);
+            // but it breaks J3H145 :(
+            //
+            // RSAPrivateCrtKey priKey = (RSAPrivateCrtKey) kp.getPrivate();
+            // short pLen = priKey.getP(buf, (short) 0);
+            // priKey.setP(buf, (short) 0, pLen);
+            // short qLen = priKey.getQ(buf, (short) 0);
+            // priKey.setQ(buf, (short) 0, qLen);
             // end of workaround
             
         } catch(CryptoException e) {
@@ -755,13 +766,8 @@ public class GidsApplet extends Applet {
 
             rsaRawCipher.init(rsaKey, Cipher.MODE_ENCRYPT);
             sigLen = rsaRawCipher.doFinal(ram_buf, (short) 0, lc, ram_buf, (short)0);
-            // A single short APDU can handle 256 bytes - only one send operation neccessary.
-            le = apdu.setOutgoing();
-            if(le > 0 && le < sigLen) {
-                ISOException.throwIt(ISO7816.SW_CORRECT_LENGTH_00);
-            }
-            apdu.setOutgoingLength(sigLen);
-            apdu.sendBytesLong(ram_buf, (short) 0, sigLen);
+
+            transmitManager.sendDataFromRamBuffer(apdu, (short)0, sigLen);
             break;
         case (byte) 0x50:
             // rsa padding made by the card, only the hash is provided
@@ -784,13 +790,7 @@ public class GidsApplet extends Applet {
                 ISOException.throwIt(ISO7816.SW_UNKNOWN);
             }*/
 
-            // A single short APDU can handle 256 bytes - only one send operation neccessary.
-            le = apdu.setOutgoing();
-            if(le > 0 && le < sigLen) {
-                ISOException.throwIt(ISO7816.SW_CORRECT_LENGTH_00);
-            }
-            apdu.setOutgoingLength(sigLen);
-            apdu.sendBytesLong(ram_buf, (short) 0, sigLen);
+            transmitManager.sendDataFromRamBuffer(apdu, (short)0, sigLen);
             break;
 
         default:
