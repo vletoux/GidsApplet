@@ -122,7 +122,7 @@ public class CRTKeyFile extends ElementaryFile {
         // focused on A5 tag
         short innerPos = 0, innerLen = 0;
         short pos = 0, len = 0;
-        // keytype is missing for symetric key
+        // keytype is missing for symmetric key
         byte keytype = 1;
         byte keyref = 0;
         if (buffer[offset] != (byte) 0xA5) {
@@ -140,7 +140,7 @@ public class CRTKeyFile extends ElementaryFile {
             }
             keytype = buffer[(short) (pos+2)];
         } catch (NotFoundException e) {
-            // optional tag: default = symetric key
+            // optional tag: default = symmetric key
         } catch (InvalidArgumentsException e) {
             ISOException.throwIt(ISO7816.SW_DATA_INVALID);
         }
@@ -167,7 +167,7 @@ public class CRTKeyFile extends ElementaryFile {
 
             pos += 1 + UtilTLV.getLengthFieldLength(buffer, (short)(pos+1));
             if (keytype == 1) {
-                importSymetricKey(buffer, pos, len);
+                importSymmetricKey(buffer, pos, len);
             } else if (keytype == 2) {
                 importRsaKey(buffer, pos, len);
             } else {
@@ -247,10 +247,16 @@ public class CRTKeyFile extends ElementaryFile {
         }
         len = UtilTLV.decodeLengthField(buffer, (short)(pos+1));
         pos += 1 + UtilTLV.getLengthFieldLength(buffer, (short)(pos+1));
-        // the minidriver may prepend a 00 before (len = len+1) and the javacard don't like it => remove the 00
+        // the minidriver may prepend a 00 before (len = len+1) and the javacards don't like it => remove the 00
         if ((len & 0x0F) == (byte) 1 && buffer[pos] == 0) {
             len -= 1;
             pos++;
+        }
+        // one byte too small?
+        if ((len & 0x0F) == (byte) 0x0F) {
+            len += 1;
+            pos--;
+            buffer[pos] = (byte) 0x00;
         }
         try {
             rsaPrKey.setP(buffer, pos, len);
@@ -271,6 +277,11 @@ public class CRTKeyFile extends ElementaryFile {
             len -= 1;
             pos++;
         }
+        if ((len & 0x0F) == (byte) 0x0F) {
+            len += 1;
+            pos--;
+            buffer[pos] = (byte) 0x00;
+        }
         rsaPrKey.setQ(buffer, pos, len);
         pos += len;
         // d mod p-1
@@ -279,9 +290,14 @@ public class CRTKeyFile extends ElementaryFile {
         }
         len = UtilTLV.decodeLengthField(buffer, (short)(pos+1));
         pos += 1 + UtilTLV.getLengthFieldLength(buffer, (short)(pos+1));
-        if ((len & 0x0F) == (byte) 1 && buffer[pos] == 0) {
+        if (((len & 0x0F) == (byte) 0x01) && (buffer[pos] == 0)) {
             len -= 1;
             pos++;
+        }
+        if ((len & 0x0F) == (byte) 0x0F) {
+            len += 1;
+            pos--;
+            buffer[pos] = (byte) 0x00;
         }
         rsaPrKey.setDP1(buffer, pos, len);
         pos += len;
@@ -295,6 +311,11 @@ public class CRTKeyFile extends ElementaryFile {
             len -= 1;
             pos++;
         }
+        if ((len & 0x0F) == (byte) 0x0F) {
+            len += 1;
+            pos--;
+            buffer[pos] = (byte) 0x00;
+        }
         rsaPrKey.setDQ1(buffer, pos, len);
         pos += len;
         // q-1 mod p
@@ -306,6 +327,11 @@ public class CRTKeyFile extends ElementaryFile {
         if ((len & 0x0F) == (byte) 1 && buffer[pos] == 0) {
             len -= 1;
             pos++;
+        }
+        if ((len & 0x0F) == (byte) 0x0F) {
+            len += 1;
+            pos--;
+            buffer[pos] = (byte) 0x00;
         }
         rsaPrKey.setPQ(buffer, pos, len);
         pos += len;
@@ -324,7 +350,7 @@ public class CRTKeyFile extends ElementaryFile {
         }
     }
 
-    private void importSymetricKey(byte[] buffer, short offset, short length) {
+    private void importSymmetricKey(byte[] buffer, short offset, short length) {
         clearContents();
         byte[] key = new byte[length];
         Util.arrayCopyNonAtomic(buffer, offset, key, (short) 0, length);
