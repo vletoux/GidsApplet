@@ -4,6 +4,8 @@ Generic Identity Device Specification (GIDS) smart card is the only PKI smart ca
 
 [My Smart Logon](https://www.mysmartlogon.com/generic-identity-device-specification-gids-smart-card/)  is providing free of charge a javacard applet to transform a java card into a GIDS smart card and its integration in OpenSC for other operating systems (Linux, MacOSX, …).
 
+3 years of use without any bug reported!
+
 ## General requirements
 
 * Java Card version 2.2.1 or above (see the list of [tested cards](https://www.mysmartlogon.com/generic-identity-device-specification-gids-smart-card/tested-cards/))
