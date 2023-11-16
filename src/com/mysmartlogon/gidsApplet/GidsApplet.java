@@ -436,7 +436,7 @@ public class GidsApplet extends Applet {
                 break;
             }
             kp.genKeyPair();
-            
+
             // special Feitian workaround for A40CR and A22CR cards
             // but it breaks J3H145 :(
             //
@@ -446,7 +446,7 @@ public class GidsApplet extends Applet {
             // short qLen = priKey.getQ(buf, (short) 0);
             // priKey.setQ(buf, (short) 0, qLen);
             // end of workaround
-            
+
         } catch(CryptoException e) {
             if(e.getReason() == CryptoException.NO_SUCH_ALGORITHM) {
                 ISOException.throwIt(ISO7816.SW_FUNC_NOT_SUPPORTED);
@@ -488,7 +488,7 @@ public class GidsApplet extends Applet {
      * \param apdu The apdu to answer. setOutgoing() must not be called already.
      *
      * \param key The RSAPublicKey to send.
-     * 			Can be null for the secound part if there is no support for extended apdus.
+     * 			  Can be null for the second part if there is no support for extended APDUs.
      */
     private void sendRSAPublicKey(APDU apdu, RSAPublicKey key) {
 
@@ -717,7 +717,7 @@ public class GidsApplet extends Applet {
 
         // Check the length of the cipher.
         // Note: The first byte of the data field is the padding indicator
-        //		 and therefor not part of the ciphertext.
+        //		 and therefore not part of the ciphertext.
         if(lc !=  (short)(theKey.getSize() / 8)) {
             ISOException.throwIt(ISO7816.SW_WRONG_LENGTH);
         }
@@ -731,7 +731,7 @@ public class GidsApplet extends Applet {
             ISOException.throwIt(ISO7816.SW_WRONG_DATA);
         }
 
-        // We have to send at most 256 bytes. A short APDU can handle that - only one send operation neccessary.
+        // We have to send at most 256 bytes. A short APDU can handle that - only one send operation necessary.
         apdu.setOutgoingAndSend((short)0, decLen);
     }
 
@@ -740,8 +740,8 @@ public class GidsApplet extends Applet {
      * 			using the private key referenced by	an earlier
      *			MANAGE SECURITY ENVIRONMENT apdu.
      *
-     * \attention The apdu should contain a hash, not raw data for RSA keys.
-     * 				PKCS1 padding will be applied if neccessary.
+     * \attention The APDU should contain a hash, not raw data for RSA keys.
+     * 			  PKCS1 padding will be applied if necessary.
      *
      * \param apdu The PERFORM SECURITY OPERATION apdu with P1=9E and P2=9A.
      *
@@ -782,7 +782,7 @@ public class GidsApplet extends Applet {
             if(lc > (short) 247) {
                 ISOException.throwIt(ISO7816.SW_WRONG_LENGTH);
             }
-            
+
             rsaPkcs1Cipher.init(rsaKey, Cipher.MODE_ENCRYPT);
             sigLen = rsaPkcs1Cipher.doFinal(buf, ISO7816.OFFSET_CDATA, lc, ram_buf, (short)0);
 
@@ -821,7 +821,7 @@ public class GidsApplet extends Applet {
     /**
      * \brief Upload and import a usable private key.
      *
-     * A preceeding MANAGE SECURITY ENVIRONMENT is necessary (like with key-generation).
+     * A preceding MANAGE SECURITY ENVIRONMENT is necessary (like with key-generation).
      * The format of the data (of the apdu) must be BER-TLV,
      * Tag 7F48 ("T-L pair to indicate a private key data object") for RSA or tag 0xC1
      * for EC keys, containing the point Q.
@@ -849,7 +849,7 @@ public class GidsApplet extends Applet {
             recvLen = transmitManager.doChainingOrExtAPDUFlash(apdu);
             // if these 2 lines are reversed, flash_buf can be null
             flash_buf = transmitManager.GetFlashBuffer();
-            
+
             try {
                 innerPos = UtilTLV.findTag(flash_buf, (short) 0, recvLen, (byte) 0x70);
                 innerLen = UtilTLV.decodeLengthField(flash_buf, (short)(innerPos+1));
@@ -857,7 +857,7 @@ public class GidsApplet extends Applet {
             } catch (Exception e) {
                 ISOException.throwIt(ISO7816.SW_DATA_INVALID);
             }
-    
+
             try {
                 pos = UtilTLV.findTag(flash_buf, innerPos, innerLen, (byte) 0x84);
                 len = UtilTLV.decodeLengthField(flash_buf, (short)(innerPos+1));
@@ -882,24 +882,24 @@ public class GidsApplet extends Applet {
             } catch (NotFoundException e) {
                 ISOException.throwIt(ISO7816.SW_DATA_INVALID);
             }
-    
+
             crt.CheckPermission(pinManager, File.ACL_OP_KEY_PUTKEY);
-    
+
             try {
                 crt.importKey(flash_buf, pos, len);
             } catch (InvalidArgumentsException e) {
                 ISOException.throwIt(ISO7816.SW_DATA_INVALID);
             }
-            // clear ressource and avoid leaking a private key in flash (if the private key is deleted after)
+            // clear resource and avoid leaking a private key in flash (if the private key is deleted after)
             transmitManager.ClearFlashBuffer();
         } catch(ISOException e) {
-            if (e.getReason() != ISO7816.SW_NO_ERROR) {                
-                // clear ressource and avoid leaking a private key in flash (if the private key is deleted after)
+            if (e.getReason() != ISO7816.SW_NO_ERROR) {
+                // clear resource and avoid leaking a private key in flash (if the private key is deleted after)
                 transmitManager.ClearFlashBuffer();
             }
             throw e;
         }
-        
+
     }
 
 } // class GidsApplet

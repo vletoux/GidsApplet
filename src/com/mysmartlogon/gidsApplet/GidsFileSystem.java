@@ -29,12 +29,12 @@ import javacard.framework.*;
 /**
  * \brief The ISO 7816 compliant GidsFileSystem class.
  *
- * It is the root of the file structure and is therefor equivalent to the ISO Master File (MF).
+ * It is the root of the file structure and is therefore equivalent to the ISO Master File (MF).
  * Normally, most of the file system oriented operations should happen through one object of this class.
  *
  * Due to the ISO 7816-4 DF and EF selection (see section 7.1) the currently selected DF and EF
  * are being saved internally. File-related operations are being executed upon those selected files respectively.
- * It is therefor possible to select a file and execute a number of operations upon this file without the need to
+ * It is therefore possible to select a file and execute a number of operations upon this file without the need to
  * specify a target in each individual method call. This also saves execution time and reduces stack usage.
  *
  */
@@ -53,8 +53,8 @@ public class GidsFileSystem extends ApplicationFile {
     /**
      * \brief Instantiate a new ISO 7816 compliant GidsFileSystem.
      *
-     * The GidsFileSystem class should normally only be instanciated once. It represents the file system and
-     * is therefor equivalemt to the ISO Master File (MF).
+     * The GidsFileSystem class should normally only be instantiated once. It represents the file system and
+     * is therefore equivalent to the ISO Master File (MF).
      * Most of the file system related operations are performed through the returned object.
      *
      * \see GidsFileSystem.
@@ -260,7 +260,7 @@ public class GidsFileSystem extends ApplicationFile {
             throw InvalidArgumentsException.getInstance();
         }
 
-        // Extract the FID from the FCI which is passed to the FileXXX contructor and saved
+        // Extract the FID from the FCI which is passed to the FileXXX constructor and saved
         // separately for performance reasons.
         pos = UtilTLV.findTag(fci, innerOffset, innerLength, (byte) 0x83);
         len = UtilTLV.decodeLengthField(fci, (short)(pos+1));
@@ -329,7 +329,7 @@ public class GidsFileSystem extends ApplicationFile {
      * This method updates the currently selected EF or DF, according to the parameters in the apdu.
      * Every selection method according to ISO 7816-4 Table 39 is valid.
      * There are limitations of the P2 byte (b8...b1)  at the moment, however:
-     * 	- The first or only occurence is the only supported file occurence (b2b1 = 00)
+     * 	- The first or only occurrence is the only supported file occurrence (b2b1 = 00)
      *	- No FMD is returned. (b4b3 != 10, if b4b3 = 00 then the response only contains the FCP template.)
      *
      * \param apdu The SELECT (FILE) apdu
@@ -348,7 +348,7 @@ public class GidsFileSystem extends ApplicationFile {
             fileToSelect = this;
         } else {
 
-            // Only "first or only occurence" supported at the moment (ISO 7816-4 Table 40).
+            // Only "first or only occurrence" supported at the moment (ISO 7816-4 Table 40).
             if((p2 & 0xF3) != 0x00) {
                 ISOException.throwIt(ISO7816.SW_INCORRECT_P1P2);
             }
@@ -507,7 +507,7 @@ public class GidsFileSystem extends ApplicationFile {
      * Configuration options are taken from the DATA field of the APDU. (I.e. P1 and P2 must be 00.)
      * The data field of the APDU must be 2-level nested TLV encoded. The upper level is the FCI (6F) or FCP (62) tag.
      * The nested information will be added to the file as FCI. Also, the following information is being taken in
-     * order to allocate the right ressources:
+     * order to allocate the right resources:
      *		- The file ID (tag 83)
      *		- The file description byte (tag 82) to determine the type, also following information to determine record
      *			sizes and amounts in case of non-transparent EFs.
@@ -599,7 +599,7 @@ public class GidsFileSystem extends ApplicationFile {
             selectFile(bertlvfile);
         }
         try {
-            // Extract the FID from the FCI which is passed to the FileXXX contructor and saved
+            // Extract the FID from the FCI which is passed to the FileXXX constructor and saved
             // separately for performance reasons.
             pos = UtilTLV.findTag(buf, ISO7816.OFFSET_CDATA, (byte) lc, (byte) 0x5C);
             if (buf[(short)(pos+(short)1)] == (byte) 0) {

@@ -44,7 +44,7 @@ public class TransmitManager {
     private Object[] chaining_object = null;
 
     private byte[] flash_buf = null;
-    
+
     // number of variables for the cache
     private static final short CHAINING_CACHE_SIZE = (short) 6;
     // index of the object (when sending Record[])
@@ -53,7 +53,7 @@ public class TransmitManager {
     private static final short RAM_CHAINING_CACHE_OFFSET_CURRENT_POS = (short) 1;
     // max size (if ram buffer)
     private static final short RAM_CHAINING_CACHE_OFFSET_BYTES_REMAINING = (short) 2;
-    // previous APDU data to check consistancy between chain
+    // previous APDU data to check consistency between chain
     private static final short RAM_CHAINING_CACHE_OFFSET_CURRENT_INS = (short) 3;
     private static final short RAM_CHAINING_CACHE_OFFSET_CURRENT_P1P2 = (short) 4;
     private static final short RAM_CHAINING_CACHE_PUT_DATA_OFFSET = (short) 5;
@@ -83,7 +83,7 @@ public class TransmitManager {
     public byte[] GetRamBuffer() {
         return ram_buf;
     }
-    
+
     public byte[] GetFlashBuffer()
     {
         return flash_buf;
@@ -92,7 +92,7 @@ public class TransmitManager {
     public void ClearRamBuffer() {
         Clear(true);
     }
-    
+
     public void ClearFlashBuffer() {
         if (flash_buf != null)
         {
@@ -174,7 +174,7 @@ public class TransmitManager {
     /**
      * \brief Receive the data sent by chaining or extended apdus and store it in ram_buf.
      *
-     * This is a convienience method if large data has to be accumulated using command chaining
+     * This is a convenience method if large data has to be accumulated using command chaining
      * or extended apdus. The apdu must be in the INITIAL state, i.e. setIncomingAndReceive()
      * might not have been called already.
      *
@@ -185,7 +185,7 @@ public class TransmitManager {
     public short doChainingOrExtAPDU(APDU apdu) throws ISOException {
         return doChainingOrExtAPDUWithBuffer(apdu, ram_buf, RAM_BUF_SIZE);
     }
-    
+
     public short doChainingOrExtAPDUFlash(APDU apdu) throws ISOException {
         // allocate flash buffer only when needed - it can remain for the rest of the card life
         if (flash_buf == null)
@@ -201,9 +201,9 @@ public class TransmitManager {
         }
         return doChainingOrExtAPDUWithBuffer(apdu, flash_buf, FLASH_BUF_SIZE);
     }
-    
+
     private short doChainingOrExtAPDUWithBuffer(APDU apdu, byte[] databuffer, short bufferlen) throws ISOException {
-        
+
         short recvLen = apdu.setIncomingAndReceive();
         byte[] buf = apdu.getBuffer();
         // Receive data (short or extended).
