@@ -8,9 +8,12 @@ Generic Identity Device Specification (GIDS) smart card is the only PKI smart ca
 
 ## General requirements
 
-* Java Card version 2.2.1 or above (see the list of [tested cards](https://www.mysmartlogon.com/generic-identity-device-specification-gids-smart-card/tested-cards/))
-* Implementation of the "requestObjectDeletion()"-mechanism of the Java Card API is recommended to be able to properly delete files.
-* Windows 7 SP1 / 2008 R2 or later for the minidriver ; OpenSC for pkcs11
+* Card requirements
+  * Java Card version 2.2.1 or above (see the list of [tested cards](https://www.mysmartlogon.com/generic-identity-device-specification-gids-smart-card/tested-cards/))
+  * Implementation of the "requestObjectDeletion()"-mechanism of the Java Card API is recommended to be able to properly delete files.
+* Requirements to use the card
+  * Windows 7 SP1 / 2008 R2 or later for the "minidriver"
+  * OpenSC (any platform) for pkcs11
 
 ## Download
 
@@ -22,17 +25,23 @@ You can use the card SDK to build the applet or [ant-javacard](https://github.co
 
 The continuous integration platform script ([.travis.yml](.travis.yml)) can be executed to build the applet.
 
+You will need to use JDK 8 to build.
+
 ## Installation
 
 Install the CAP-file (GidsApplet.cap) to your Java Card smartcard (e.g. with [GlobalPlatformPro](https://github.com/martinpaljak/GlobalPlatformPro)).
 The release section includes compiled version of the applet.
 
 Most of the time, the applet can be installed with the command:
-gp -install GidsApplet.cap
 
-Some cards require additional switch like for G&D -emv or Gemalto -visa2 -key. See this [page](https://github.com/martinpaljak/GlobalPlatformPro/tree/master/docs/TestedCards) for more details.
+```sh
+gp --install GidsApplet.cap --default
+```
+
+Some cards require additional switch like for G&D `-emv` or Gemalto `-visa2 -key`. See this [page](https://github.com/martinpaljak/GlobalPlatformPro/tree/master/docs/TestedCards) for more details.
 MANY UNSUCCESSFUL GP COMMANDS (approx 10) CAN BRICK YOUR CARD. Contact your manufacturer for more information.
 
 ## Reference
+
 * [GIDS specification](http://msdn.microsoft.com/en-us/library/windows/hardware/dn642100%28v=vs.85%29.aspx)
 * [minidriver specification](http://msdn.microsoft.com/en-us/library/windows/hardware/dn631754%28v=vs.85%29.aspx) (for card initialization)
