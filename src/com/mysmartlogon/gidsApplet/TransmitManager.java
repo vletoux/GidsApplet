@@ -38,7 +38,6 @@ public class TransmitManager {
     // a ram buffer for public key export (no need to allocate flash !)
     // memory buffer size is determined by copyRecordsToRamBuf=min 512
     private static final short RAM_BUF_SIZE = (short) 530;
-    private static final short FLASH_BUF_SIZE = (short) 1220;
     private byte[] ram_buf = null;
     // internal variables to do chaining
     private short[] chaining_cache = null;
@@ -102,7 +101,7 @@ public class TransmitManager {
                 flash_buf = null;
                 JCSystem.requestObjectDeletion();
             } else {
-                Util.arrayFillNonAtomic(flash_buf, (short)0, FLASH_BUF_SIZE, (byte)0x00);
+                Util.arrayFillNonAtomic(flash_buf, (short)0, Config.FLASH_BUF_SIZE, (byte)0x00);
             }
         }
     }
@@ -193,7 +192,7 @@ public class TransmitManager {
         if (flash_buf == null)
         {
             try {
-                flash_buf = new byte[FLASH_BUF_SIZE];
+                flash_buf = new byte[Config.FLASH_BUF_SIZE];
             } catch(SystemException e) {
                 if(e.getReason() == SystemException.NO_RESOURCE) {
                     ISOException.throwIt(ISO7816.SW_FILE_FULL);
@@ -201,7 +200,7 @@ public class TransmitManager {
                 ISOException.throwIt(ISO7816.SW_UNKNOWN);
             }
         }
-        return doChainingOrExtAPDUWithBuffer(apdu, flash_buf, FLASH_BUF_SIZE);
+        return doChainingOrExtAPDUWithBuffer(apdu, flash_buf, Config.FLASH_BUF_SIZE);
     }
 
     private short doChainingOrExtAPDUWithBuffer(APDU apdu, byte[] databuffer, short bufferlen) throws ISOException {
