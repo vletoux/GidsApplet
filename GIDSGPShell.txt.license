@@ -4,18 +4,3 @@
 # Copyright (C) 2016  Vincent Le Toux(vincent.letoux@mysmartlogon.com)
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
-
-.*
-!.gitignore
-!.travis.yml
-!.reuse
-
-
-# Build products
-*.cap
-
-# Auto-downloaded
-ant-javacard.jar
-
-# Manually created with downloaded contents
-/jckit/
