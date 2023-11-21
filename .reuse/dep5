@@ -1,0 +1,10 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: GidsApplet
+Upstream-Contact: Vincent Le Toux <vincent.letoux@mysmartlogon.com>
+Source: https://github.com/vletoux/GidsApplet
+
+# Sample paragraph, commented out:
+#
+# Files: src/*
+# Copyright: $YEAR $NAME <$CONTACT>
+# License: ...
