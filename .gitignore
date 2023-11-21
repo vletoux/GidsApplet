@@ -1,0 +1,13 @@
+.*
+!.gitignore
+!.travis.yml
+
+
+# Build products
+*.cap
+
+# Auto-downloaded
+ant-javacard.jar
+
+# Manually created with downloaded contents
+/jckit/

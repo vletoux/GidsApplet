@@ -39,7 +39,7 @@ import javacardx.crypto.Cipher;
  */
 public class GidsPINManager {
 
-    /* PIN, PUK and key realted constants */
+    /* PIN, PUK and key related constants */
     // PIN:
     private static final byte PIN_MAX_TRIES = 3;
     private static final byte PIN_MIN_LENGTH = 4;
@@ -299,7 +299,7 @@ public class GidsPINManager {
             }
 
             byte currentPinLength = pin.GetCurrentPINLen();
-            // if the current pin is very long and the tested pin is very short, force the verification to decreate the remaining try count
+            // if the current pin is very long and the tested pin is very short, force the verification to decrease the remaining try count
             // do not allow the revelation of currentPinLength until pin.check is done
             if (lc < currentPinLength) {
                 currentPinLength = (byte) lc;
@@ -544,7 +544,7 @@ public class GidsPINManager {
             buf[1] = (byte) 0x2A;
             buf[2] = (byte) 0x82;
             buf[3] = (byte) 0x28;
-            
+
             // avoid replay attack
             ClearChallengeData();
             status[0] = MUTUAL_AUTHENTICATED;
