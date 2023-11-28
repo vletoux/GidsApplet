@@ -28,28 +28,41 @@
   <description>Builds the project. </description>
   <get src="https://github.com/martinpaljak/ant-javacard/releases/download/v23.08.29/ant-javacard.jar" dest="." skipexisting="true"/>
   <taskdef name="javacard" classname="pro.javacard.ant.JavaCard" classpath="ant-javacard.jar"/>
+
+  <!-- properties shared by all variants -->
+  <property name="cap.ver"    value="1.0" />
+  <property name="cap.aid"    value="A0:00:00:03:97:42:54:46:59" /> <!-- Microsoft IDMP AID aka MsGidsAID-->
+  <property name="applet.aid" value="${cap.aid}:02:01" /><!-- extra bytes: GIDS 2.0, app reserved -->
+  <property name="mainclass"  value="com.mysmartlogon.gidsApplet.GidsApplet"/>
+
+  <!-- sources used by all variants -->
+  <property name="src.common" value="src/com/mysmartlogon/gidsApplet" />
+  <!-- per-variant source dirs -->
+  <property name="src.2k"     value="src/import2048/com/mysmartlogon/gidsApplet" />
+  <property name="src.4k"     value="src/import4096/com/mysmartlogon/gidsApplet" />
+
   <target name="dist" description="generate the distribution">
     <tstamp/>
 
     <!-- Standard version - buffer size limits 4096-bit RSA key support to be on-card generated only -->
     <javacard>
       <cap
-          aid="A0:00:00:03:97:42:54:46:59"
+          aid="${cap.aid}"
           output="GidsApplet.cap"
-          sources="src/com/mysmartlogon/gidsApplet;src/import2048/com/mysmartlogon/gidsApplet"
-          version="1.0">
-        <applet class="com.mysmartlogon.gidsApplet.GidsApplet" aid="A0:00:00:03:97:42:54:46:59:02:01"/>
+          sources="${src.common};${src.2k}"
+          version="${cap.ver}">
+        <applet class="${mainclass}" aid="${applet.aid}"/>
       </cap>
     </javacard>
 
     <!-- Extended version - Will attempt to import 4096-bit RSA keys if your card can do it -->
     <javacard>
       <cap
-          aid="A0:00:00:03:97:42:54:46:59"
+          aid="${cap.aid}"
           output="GidsApplet-import4k.cap"
-          sources="src/com/mysmartlogon/gidsApplet;src/import4096/com/mysmartlogon/gidsApplet"
-          version="1.0">
-        <applet class="com.mysmartlogon.gidsApplet.GidsApplet" aid="A0:00:00:03:97:42:54:46:59:02:01"/>
+          sources="${src.common};${src.4k}"
+          version="${cap.ver}">
+        <applet class="${mainclass}" aid="${applet.aid}"/>
       </cap>
     </javacard>
   </target>
