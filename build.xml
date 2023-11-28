@@ -31,6 +31,7 @@
   <target name="dist" description="generate the distribution">
     <tstamp/>
 
+    <!-- Standard version - buffer size limits 4096-bit RSA key support to be on-card generated only -->
     <javacard>
       <cap
           aid="A0:00:00:03:97:42:54:46:59"
@@ -40,9 +41,21 @@
         <applet class="com.mysmartlogon.gidsApplet.GidsApplet" aid="A0:00:00:03:97:42:54:46:59:02:01"/>
       </cap>
     </javacard>
+
+    <!-- Extended version - Will attempt to import 4096-bit RSA keys if your card can do it -->
+    <javacard>
+      <cap
+          aid="A0:00:00:03:97:42:54:46:59"
+          output="GidsApplet-import4k.cap"
+          sources="src/com/mysmartlogon/gidsApplet;src/import4096/com/mysmartlogon/gidsApplet"
+          version="1.0">
+        <applet class="com.mysmartlogon.gidsApplet.GidsApplet" aid="A0:00:00:03:97:42:54:46:59:02:01"/>
+      </cap>
+    </javacard>
   </target>
   <target name="clean" description="clean up">
     <!-- Delete the built applet -->
     <delete dir="GidsApplet.cap"/>
+    <delete dir="GidsApplet-import4k.cap"/>
   </target>
 </project>
