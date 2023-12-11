@@ -35,6 +35,11 @@
   <property name="applet.aid" value="${cap.aid}:02:01" /><!-- extra bytes: GIDS 2.0, app reserved -->
   <property name="mainclass"  value="com.mysmartlogon.gidsApplet.GidsApplet"/>
 
+  <!-- selects the tool version - can be newer than targetsdk -->
+  <property name="jckit"      value="ext/sdks/jc305u4_kit"/>
+  <!-- sets card compatibility -->
+  <property name="targetsdk"  value="ext/sdks/jc221_kit"/>
+
   <!-- sources used by all variants -->
   <property name="src.common" value="src/main" />
   <!-- per-variant source dirs -->
@@ -45,19 +50,19 @@
     <tstamp/>
 
     <!-- Standard version - buffer size limits 4096-bit RSA key support to be on-card generated only -->
-    <javacard>
+    <javacard jckit="${jckit}">
       <cap
+          targetsdk="${targetsdk}"
           aid="${cap.aid}"
           output="GidsApplet.cap"
           sources="${src.common};${src.2k}"
           version="${cap.ver}">
         <applet class="${mainclass}" aid="${applet.aid}"/>
       </cap>
-    </javacard>
 
-    <!-- Extended version - Will attempt to import 4096-bit RSA keys if your card can do it -->
-    <javacard>
+      <!-- Extended version - Will attempt to import 4096-bit RSA keys if your card can do it -->
       <cap
+          targetsdk="${targetsdk}"
           aid="${cap.aid}"
           output="GidsApplet-import4k.cap"
           sources="${src.common};${src.4k}"
