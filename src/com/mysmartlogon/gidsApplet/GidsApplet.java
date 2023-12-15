@@ -396,12 +396,14 @@ public class GidsApplet extends Applet {
             if( ! UtilTLV.isTLVconsistent(buf, innerOffset, innerLength) ) {
                 throw InvalidArgumentsException.getInstance();
             }
+            // tag 0x83: variable length, key reference identifier
             pos = UtilTLV.findTag(buf, innerOffset, innerLength, (byte) 0x83);
             len = UtilTLV.decodeLengthField(buf, (short)(pos+1));
             if (len != (short) 1) {
                 throw InvalidArgumentsException.getInstance();
             }
             keyID = buf[(short)(pos+2)];
+            // tag 0x80: cryptographic mechanism identifier
             pos = UtilTLV.findTag(buf, innerOffset, innerLength, (byte) 0x80);
             len = UtilTLV.decodeLengthField(buf, (short)(pos+1));
             if (len != (short) 1) {
@@ -420,6 +422,7 @@ public class GidsApplet extends Applet {
         }
         file.CheckPermission(pinManager, File.ACL_OP_KEY_GENERATE_ASYMETRIC);
         try {
+            // GIDS spec table 43
             switch(algID) {
             case (byte)0x06:
                 kp = new KeyPair(KeyPair.ALG_RSA_CRT, KeyBuilder.LENGTH_RSA_1024);
