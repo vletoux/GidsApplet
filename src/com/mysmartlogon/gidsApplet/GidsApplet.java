@@ -79,6 +79,8 @@ public class GidsApplet extends Applet {
     public static final short LENGTH_RSA_3072 = (short) 3072;
     public static final short LENGTH_RSA_4096 = (short) 4096;
 
+    public static final boolean CONFIG_USE_FEITIAN_WORKAROUND = true;
+
     private GidsPINManager pinManager = null;
 
 
@@ -439,15 +441,21 @@ public class GidsApplet extends Applet {
             }
             kp.genKeyPair();
 
-            // special Feitian workaround for A40CR and A22CR cards
-            // but it breaks J3H145 :(
-            //
-            // RSAPrivateCrtKey priKey = (RSAPrivateCrtKey) kp.getPrivate();
-            // short pLen = priKey.getP(buf, (short) 0);
-            // priKey.setP(buf, (short) 0, pLen);
-            // short qLen = priKey.getQ(buf, (short) 0);
-            // priKey.setQ(buf, (short) 0, qLen);
-            // end of workaround
+            if (CONFIG_USE_FEITIAN_WORKAROUND) {
+                // special Feitian workaround for A40CR and A22CR cards
+                // but it breaks J3H145 :(
+                // using p1 for temp since we aren't using it anymore
+                p1 = buf[ISO7816.OFFSET_INS];
+                // TODO do we also need to back up and restore Le?
+
+                RSAPrivateCrtKey priKey = (RSAPrivateCrtKey) kp.getPrivate();
+                short pLen = priKey.getP(buf, (short) 0);
+                priKey.setP(buf, (short) 0, pLen);
+                short qLen = priKey.getQ(buf, (short) 0);
+                priKey.setQ(buf, (short) 0, qLen);
+
+                buf[ISO7816.OFFSET_INS] = p1;
+            }
 
         } catch(CryptoException e) {
             if(e.getReason() == CryptoException.NO_SUCH_ALGORITHM) {
