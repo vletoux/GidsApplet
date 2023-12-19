@@ -24,7 +24,7 @@
 
   SPDX-License-Identifier: GPL-3.0-or-later
 -->
-<project name="Gids Applet" default="dist" basedir=".">
+<project name="GidsApplet" default="dist" basedir=".">
   <description>Builds the project. </description>
   <get src="https://github.com/martinpaljak/ant-javacard/releases/download/v23.08.29/ant-javacard.jar" dest="." skipexisting="true"/>
   <taskdef name="javacard" classname="pro.javacard.ant.JavaCard" classpath="ant-javacard.jar"/>
@@ -49,16 +49,24 @@
   <!-- output directory -->
   <property name="dist.dir" value="dist" />
 
+  <!-- Are we a release build? By default we are not, override with -Drelease=true on command line -->
+  <property name="release" value="false" />
+
   <target name="dist" description="generate the distribution">
     <tstamp/>
     <mkdir dir="${dist.dir}"/>
+
+    <!-- If we are not a release build, we get a date suffix -->
+    <condition property="build_suffix" value="" else="-${DSTAMP}">
+      <equals arg1="${release}" arg2="true"/>
+    </condition>
 
     <!-- Standard version - buffer size limits 4096-bit RSA key support to be on-card generated only -->
     <javacard jckit="${jckit}">
       <cap
           targetsdk="${targetsdk}"
           aid="${cap.aid}"
-          output="${dist.dir}/GidsApplet-${cap.ver}.cap"
+          output="${dist.dir}/${ant.project.name}-${cap.ver}${build_suffix}.cap"
           sources="${src.common};${src.2k}"
           version="${cap.ver}">
         <applet class="${mainclass}" aid="${applet.aid}"/>
@@ -68,7 +76,7 @@
       <cap
           targetsdk="${targetsdk}"
           aid="${cap.aid}"
-          output="${dist.dir}/GidsApplet-import4k-${cap.ver}.cap"
+          output="${dist.dir}/${ant.project.name}-import4k-${cap.ver}${build_suffix}.cap"
           sources="${src.common};${src.4k}"
           version="${cap.ver}">
         <applet class="${mainclass}" aid="${applet.aid}"/>
