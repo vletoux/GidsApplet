@@ -50,8 +50,7 @@ public class CryptoTest extends GidsBaseTestClass {
         //execute("00 A4 00 0C 02 B0 81");
         execute("00 44 00 00 00");
         // generate asymmetric key (RSA 1024)
-        // TODO non-standard apdu? Provides no Le.
-        execute("00 47 00 00 08 AC 06 80 01 06 83 01 81");
+        execute("00 47 00 00 08 AC 06 80 01 06 83 01 81 8c");
         execute("00 A4 00 0C 02 B0 81");
         // read the public key
         execute("00 CB 3F FF 0A 70 08 84 01 81 A5 03 7F 49 80 00");
