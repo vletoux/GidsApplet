@@ -18,6 +18,7 @@
 # Build products
 dist/
 *.cap
+build/
 
 # Auto-downloaded
 ant-javacard.jar
