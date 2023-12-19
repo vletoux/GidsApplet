@@ -52,16 +52,18 @@
   <!-- Are we a release build? By default we are not, override with -Drelease=true on command line -->
   <property name="release" value="false" />
 
-  <target name="dist" description="generate the distribution">
+  <!-- Initialization target -->
+  <target name="init">
     <tstamp/>
     <mkdir dir="${dist.dir}"/>
-
     <!-- If we are not a release build, we get a date suffix -->
     <condition property="build_suffix" value="" else="-${DSTAMP}">
       <equals arg1="${release}" arg2="true"/>
     </condition>
+  </target>
 
-    <!-- Standard version - buffer size limits 4096-bit RSA key support to be on-card generated only -->
+  <!-- Standard version - buffer size limits 4096-bit RSA key support to be on-card generated only -->
+  <target name="cap.2k" depends="init" description="Build the standard version that can generate 4096-bit RSA keys but only import 2048-bit">
     <javacard jckit="${jckit}">
       <cap
           targetsdk="${targetsdk}"
@@ -71,8 +73,12 @@
           version="${cap.ver}">
         <applet class="${mainclass}" aid="${applet.aid}"/>
       </cap>
+    </javacard>
+  </target>
 
-      <!-- Extended version - Will attempt to import 4096-bit RSA keys if your card can do it -->
+  <!-- Standard version - buffer size limits 4096-bit RSA key support to be on-card generated only -->
+  <target name="cap.4k" depends="init" description="Build the extended version that can import 4096-bit RSA keys">
+    <javacard jckit="${jckit}">
       <cap
           targetsdk="${targetsdk}"
           aid="${cap.aid}"
@@ -83,6 +89,9 @@
       </cap>
     </javacard>
   </target>
+
+  <target name="dist" depends="cap.2k,cap.4k" description="generate the distribution"/>
+
   <target name="clean" description="clean up">
     <!-- Delete the built applet -->
     <delete dir="${dist.dir}"/>
