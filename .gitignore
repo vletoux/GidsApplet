@@ -12,6 +12,7 @@
 
 
 # Build products
+dist/
 *.cap
 
 # Auto-downloaded

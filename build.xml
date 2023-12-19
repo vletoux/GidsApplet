@@ -30,7 +30,7 @@
   <taskdef name="javacard" classname="pro.javacard.ant.JavaCard" classpath="ant-javacard.jar"/>
 
   <!-- properties shared by all variants -->
-  <property name="cap.ver"    value="1.0" />
+  <property name="cap.ver"    value="1.3" />
   <property name="cap.aid"    value="A0:00:00:03:97:42:54:46:59" /> <!-- Microsoft IDMP AID aka MsGidsAID-->
   <property name="applet.aid" value="${cap.aid}:02:01" /><!-- extra bytes: GIDS 2.0, app reserved -->
   <property name="mainclass"  value="com.mysmartlogon.gidsApplet.GidsApplet"/>
@@ -46,15 +46,19 @@
   <property name="src.2k"     value="src/import2048" />
   <property name="src.4k"     value="src/import4096" />
 
+  <!-- output directory -->
+  <property name="dist.dir" value="dist" />
+
   <target name="dist" description="generate the distribution">
     <tstamp/>
+    <mkdir dir="${dist.dir}"/>
 
     <!-- Standard version - buffer size limits 4096-bit RSA key support to be on-card generated only -->
     <javacard jckit="${jckit}">
       <cap
           targetsdk="${targetsdk}"
           aid="${cap.aid}"
-          output="GidsApplet.cap"
+          output="${dist.dir}/GidsApplet-${cap.ver}.cap"
           sources="${src.common};${src.2k}"
           version="${cap.ver}">
         <applet class="${mainclass}" aid="${applet.aid}"/>
@@ -64,7 +68,7 @@
       <cap
           targetsdk="${targetsdk}"
           aid="${cap.aid}"
-          output="GidsApplet-import4k.cap"
+          output="${dist.dir}/GidsApplet-import4k-${cap.ver}.cap"
           sources="${src.common};${src.4k}"
           version="${cap.ver}">
         <applet class="${mainclass}" aid="${applet.aid}"/>
@@ -73,7 +77,6 @@
   </target>
   <target name="clean" description="clean up">
     <!-- Delete the built applet -->
-    <delete dir="GidsApplet.cap"/>
-    <delete dir="GidsApplet-import4k.cap"/>
+    <delete dir="${dist.dir}"/>
   </target>
 </project>
