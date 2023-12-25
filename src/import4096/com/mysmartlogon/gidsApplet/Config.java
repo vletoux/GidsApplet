@@ -26,7 +26,7 @@
 
 package com.mysmartlogon.gidsApplet;
 
-public class Config {
+public interface Config {
     // This is the primary limitation on the size of imported keys.
     // 2372 is enough for RSA/4096 but might be larger than needed. (2364 was not enough)
     public static final short FLASH_BUF_SIZE = (short) 2372;
