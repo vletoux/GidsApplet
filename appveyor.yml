@@ -24,6 +24,7 @@ build_script:
 - cmd: git submodule update --init --recursive
 - cmd: ant dist
 test_script:
+- cmd: ant test
 - cmd: java -jar gp.jar --info --cap dist\GidsApplet-1.0.3*.cap
 artifacts:
 - path: dist\*.cap
