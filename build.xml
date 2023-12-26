@@ -36,10 +36,10 @@
   <property name="mainclass"  value="com.mysmartlogon.gidsApplet.GidsApplet"/>
 
   <!-- sources used by all variants -->
-  <property name="src.common" value="src/com/mysmartlogon/gidsApplet" />
+  <property name="src.common" value="src/main" />
   <!-- per-variant source dirs -->
-  <property name="src.2k"     value="src/import2048/com/mysmartlogon/gidsApplet" />
-  <property name="src.4k"     value="src/import4096/com/mysmartlogon/gidsApplet" />
+  <property name="src.2k"     value="src/import2048" />
+  <property name="src.4k"     value="src/import4096" />
 
   <target name="dist" description="generate the distribution">
     <tstamp/>
