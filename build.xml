@@ -24,51 +24,195 @@
 
   SPDX-License-Identifier: GPL-3.0-or-later
 -->
-<project name="Gids Applet" default="dist" basedir=".">
+<project name="GidsApplet" default="dist" basedir=".">
   <description>Builds the project. </description>
   <get src="https://github.com/martinpaljak/ant-javacard/releases/download/v23.08.29/ant-javacard.jar" dest="." skipexisting="true"/>
   <taskdef name="javacard" classname="pro.javacard.ant.JavaCard" classpath="ant-javacard.jar"/>
 
   <!-- properties shared by all variants -->
-  <property name="cap.ver"    value="1.0" />
+  <property name="cap.ver"    value="1.3" />
   <property name="cap.aid"    value="A0:00:00:03:97:42:54:46:59" /> <!-- Microsoft IDMP AID aka MsGidsAID-->
   <property name="applet.aid" value="${cap.aid}:02:01" /><!-- extra bytes: GIDS 2.0, app reserved -->
   <property name="mainclass"  value="com.mysmartlogon.gidsApplet.GidsApplet"/>
 
+  <!-- selects the tool version - can be newer than targetsdk -->
+  <property name="jckit"      value="ext/sdks/jc305u4_kit"/>
+  <!-- sets card compatibility -->
+  <property name="targetsdk"  value="ext/sdks/jc221_kit"/>
+
   <!-- sources used by all variants -->
-  <property name="src.common" value="src/com/mysmartlogon/gidsApplet" />
+  <property name="src.common" value="src/main" />
   <!-- per-variant source dirs -->
-  <property name="src.2k"     value="src/import2048/com/mysmartlogon/gidsApplet" />
-  <property name="src.4k"     value="src/import4096/com/mysmartlogon/gidsApplet" />
+  <property name="src.2k"     value="src/import2048" />
+  <property name="src.4k"     value="src/import4096" />
+  <!-- test sources -->
+  <property name="src.tests"  value="src/test"/>
 
-  <target name="dist" description="generate the distribution">
+  <!-- build dirs for tests -->
+  <property name="build.root" value="build"/>
+  <property name="build.deps" value="${build.root}/deps"/>
+  <property name="build.2k"   value="${build.root}/import2048"/>
+  <property name="build.4k"   value="${build.root}/import4096"/>
+
+  <!-- jars for applets, for use in building tests -->
+  <property name="build.2k.jar" value="${build.2k}/GidsApplet.jar"/>
+  <property name="build.4k.jar" value="${build.4k}/GidsApplet.jar"/>
+
+  <!-- test result directories -->
+  <property name="tests.2k" value="${build.root}/testoutput2048"/>
+  <property name="tests.4k" value="${build.root}/testoutput4096"/>
+
+  <!-- output directory -->
+  <property name="dist.dir" value="dist" />
+
+  <!-- Are we a release build? By default we are not, override with -Drelease=true on command line -->
+  <property name="release" value="false" />
+
+  <!-- Initialization target -->
+  <target name="init">
     <tstamp/>
+    <mkdir dir="${dist.dir}"/>
+    <!-- If we are not a release build, we get a date suffix -->
+    <condition property="build_suffix" value="" else="-${DSTAMP}">
+      <equals arg1="${release}" arg2="true"/>
+    </condition>
+    <!-- If we are not a release build, we generate debug symbols -->
+    <condition property="debug" value="false" else="true">
+      <equals arg1="${release}" arg2="true"/>
+    </condition>
+  </target>
 
-    <!-- Standard version - buffer size limits 4096-bit RSA key support to be on-card generated only -->
-    <javacard>
+  <!-- Standard version - buffer size limits 4096-bit RSA key support to be on-card generated only -->
+  <target name="cap.2k" depends="init" description="Build the standard version that can generate 4096-bit RSA keys but only import 2048-bit">
+    <javacard jckit="${jckit}">
       <cap
+          targetsdk="${targetsdk}"
           aid="${cap.aid}"
-          output="GidsApplet.cap"
+          output="${dist.dir}/${ant.project.name}-${cap.ver}${build_suffix}.cap"
           sources="${src.common};${src.2k}"
-          version="${cap.ver}">
-        <applet class="${mainclass}" aid="${applet.aid}"/>
-      </cap>
-    </javacard>
-
-    <!-- Extended version - Will attempt to import 4096-bit RSA keys if your card can do it -->
-    <javacard>
-      <cap
-          aid="${cap.aid}"
-          output="GidsApplet-import4k.cap"
-          sources="${src.common};${src.4k}"
-          version="${cap.ver}">
+          version="${cap.ver}"
+          jar="${build.2k.jar}"
+          debug="${debug}">
         <applet class="${mainclass}" aid="${applet.aid}"/>
       </cap>
     </javacard>
   </target>
+
+  <!-- Standard version - buffer size limits 4096-bit RSA key support to be on-card generated only -->
+  <target name="cap.4k" depends="init" description="Build the extended version that can import 4096-bit RSA keys">
+    <javacard jckit="${jckit}">
+      <cap
+          targetsdk="${targetsdk}"
+          aid="${cap.aid}"
+          output="${dist.dir}/${ant.project.name}-import4k-${cap.ver}${build_suffix}.cap"
+          sources="${src.common};${src.4k}"
+          version="${cap.ver}"
+          jar="${build.4k.jar}"
+          debug="${debug}">
+        <applet class="${mainclass}" aid="${applet.aid}"/>
+      </cap>
+    </javacard>
+  </target>
+
+  <target name="dist" depends="cap.2k,cap.4k" description="generate the distribution"/>
+
   <target name="clean" description="clean up">
     <!-- Delete the built applet -->
-    <delete dir="GidsApplet.cap"/>
-    <delete dir="GidsApplet-import4k.cap"/>
+    <delete dir="${dist.dir}"/>
+    <!-- Delete test builds -->
+    <delete dir="${build.root}"/>
   </target>
+
+  <!-- Things related to testing -->
+  <target name="get-deps">
+    <mkdir dir="${build.deps}"/>
+    <get dest="${build.deps}" skipexisting="true" src="https://repo1.maven.org/maven2/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar"/>
+    <get dest="${build.deps}" skipexisting="true" src="https://repo1.maven.org/maven2/junit/junit/4.12/junit-4.12.jar"/>
+    <get dest="${build.deps}" skipexisting="true" src="https://repo1.maven.org/maven2/javax/xml/bind/jaxb-api/2.3.1/jaxb-api-2.3.1.jar"/>
+    <get dest="${build.deps}" skipexisting="true" src="https://repo1.maven.org/maven2/org/glassfish/jaxb/jaxb-runtime/2.3.9/jaxb-runtime-2.3.9.jar"/>
+  </target>
+
+  <path id="classpath.compile_tests">
+    <pathelement location="${build.deps}/jaxb-api-2.3.1.jar"/>
+    <pathelement location="${build.deps}/junit-4.12.jar"/>
+    <pathelement location="ext/jcardsim-3.0.5-20230313.131323-6.jar"/>
+  </path>
+
+  <path id="classpath.test">
+    <path refid="classpath.compile_tests"/>
+    <pathelement location="${build.deps}/hamcrest-core-1.3.jar"/>
+    <pathelement location="${build.deps}/jaxb-runtime-2.3.9.jar"/>
+  </path>
+
+  <target name="test-2k.compile" depends="get-deps,cap.2k">
+    <!-- Build tests against the 2k version of the applet. -->
+    <javac srcdir="${src.tests}" destdir="${build.2k}" includeantruntime="false" debug="true">
+      <classpath>
+        <path refid="classpath.compile_tests"/>
+        <pathelement location="${build.2k.jar}"/>
+      </classpath>
+    </javac>
+  </target>
+
+  <target name="test-4k.compile" depends="get-deps,cap.4k">
+    <!-- Build tests against the 4k version of the applet. -->
+    <javac srcdir="${src.tests}" destdir="${build.4k}" includeantruntime="false" debug="true">
+      <classpath>
+        <path refid="classpath.compile_tests"/>
+        <pathelement location="${build.4k.jar}"/>
+      </classpath>
+    </javac>
+  </target>
+
+  <!-- Run tests on the 2k build -->
+  <target name="test-2k" depends="test-2k.compile" description="Run tests on the standard build.">
+    <mkdir dir="${tests.2k}"/>
+    <junit
+        printsummary="true"
+        haltonfailure="false"
+        fork="true"
+        showoutput="false"
+        failureproperty="testresult.failed">
+      <classpath>
+        <path refid="classpath.test"/>
+        <pathelement location="${build.2k.jar}"/>
+        <pathelement location="${build.2k}"/>
+      </classpath>
+      <formatter type="brief"/>
+      <batchtest todir="${tests.2k}">
+          <fileset dir="${build.2k}">
+            <include name="**/*Test.class"/>
+            <include name="**/*Tests.class"/>
+          </fileset>
+      </batchtest>
+    </junit>
+    <fail if="testresult.failed" message="Failure in tests run against standard build: see logs in ${tests.2k}"/>
+  </target>
+
+  <!-- Run tests on the 4k build -->
+  <target name="test-4k" depends="test-4k.compile" description="Run tests on the extended build.">
+    <mkdir dir="${tests.4k}"/>
+    <junit
+        printsummary="true"
+        haltonfailure="false"
+        fork="true"
+        showoutput="false"
+        failureproperty="testresult.failed">
+      <classpath>
+        <path refid="classpath.test"/>
+        <pathelement location="${build.4k.jar}"/>
+        <pathelement location="${build.4k}"/>
+      </classpath>
+      <formatter type="brief"/>
+      <batchtest todir="${tests.4k}">
+          <fileset dir="${build.4k}">
+            <include name="**/*Test.class"/>
+            <include name="**/*Tests.class"/>
+          </fileset>
+      </batchtest>
+    </junit>
+    <fail if="testresult.failed" message="Failure in tests run against extended build: see logs in ${tests.4k}"/>
+  </target>
+
+  <target name="test" depends="test-2k,test-4k"/>
 </project>

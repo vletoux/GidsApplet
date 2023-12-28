@@ -1,0 +1,16 @@
+{
+    // GidsApplet: A Java Card implementation of the GIDS (Generic Identity
+    // Device Specification) specification
+    // https://msdn.microsoft.com/en-us/library/windows/hardware/dn642100%28v=vs.85%29.aspx
+    // Copyright (C) 2016  Vincent Le Toux(vincent.letoux@mysmartlogon.com)
+    //
+    // SPDX-License-Identifier: GPL-3.0-or-later
+    "recommendations": [
+        "nickheap.vscode-ant",
+        "vscjava.vscode-java-debug",
+        "redhat.java",
+        "vscjava.vscode-java-dependency",
+        "vscjava.vscode-java-test"
+    ],
+    "unwantedRecommendations": ["vscjava.vscode-java-pack"]
+}

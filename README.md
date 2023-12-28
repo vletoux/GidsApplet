@@ -34,7 +34,7 @@ You can use the card SDK to build the applet or [ant-javacard](https://github.co
 
 The continuous integration platform script ([.travis.yml](.travis.yml)) can be executed to build the applet.
 
-You will need to use JDK 8 to build.
+You will need to use JDK 11 to build.
 
 ## Installation
 

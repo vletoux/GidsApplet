@@ -9,13 +9,21 @@
 !.gitignore
 !.travis.yml
 !.reuse
+!.vscode
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
 
 
 # Build products
+dist/
 *.cap
+build/
 
 # Auto-downloaded
 ant-javacard.jar
+/lib/
+/test-lib/
 
 # Manually created with downloaded contents
 /jckit/

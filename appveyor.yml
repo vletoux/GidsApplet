@@ -8,26 +8,23 @@
 version: 1.0.{build}
 install:
 - cmd: >-
-    appveyor DownloadFile https://blog.gentilkiwi.com/downloads/java_card_kit-2_2_1-win-dom.zip
+    appveyor DownloadFile https://dlcdn.apache.org//ant/binaries/apache-ant-1.10.14-bin.zip
 
     appveyor DownloadFile https://github.com/martinpaljak/GlobalPlatformPro/releases/latest/download/gp.jar
 
-    7z x java_card_kit-2_2_1-win-dom.zip
+    7z x apache-ant-1.10.14-bin.zip
 
-    set JC_HOME=%cd%\java_card_kit-2_2_1
-
-    set PATH=%JC_HOME%\bin;%PATH%
+    set PATH=%cd%\apache-ant-1.10.14\bin;%PATH%
 
 
     java -version
 
     javac -version
 build_script:
-- cmd: >-
-    javac -Xlint:-options -g -source 1.2 -target 1.2 -classpath %JC_HOME%\lib\api.jar src\com\mysmartlogon\gidsApplet\*.java
-
-    java -classpath %JC_HOME%\lib\converter.jar;%JC_HOME%\lib\offcardverifier.jar com.sun.javacard.converter.Converter -out CAP -exportpath %JC_HOME%\api_export_files -classdir src -applet 0xa0:0x00:0x00:0x03:0x97:0x42:0x54:0x46:0x59:0x02:0x01 com.mysmartlogon.gidsApplet.GidsApplet com.mysmartlogon.gidsApplet 0xa0:0x00:0x00:0x03:0x97:0x42:0x54:0x46:0x59 1.0
+- cmd: git submodule update --init --recursive
+- cmd: ant dist
 test_script:
-- cmd: java -jar gp.jar --info --cap src\com\mysmartlogon\gidsApplet\javacard\gidsApplet.cap
+- cmd: ant test
+- cmd: java -jar gp.jar --info --cap dist\GidsApplet-1.0.3*.cap
 artifacts:
-- path: src\com\mysmartlogon\gidsApplet\javacard\*.cap
+- path: dist\*.cap
