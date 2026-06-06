@@ -32,7 +32,6 @@ import javacard.framework.JCSystem;
 import javacard.framework.Util;
 import javacard.security.CryptoException;
 import javacard.security.KeyBuilder;
-import javacard.security.KeyPair;
 import javacard.security.RSAPrivateCrtKey;
 import javacard.security.RSAPublicKey;
 
@@ -44,7 +43,8 @@ public class CRTKeyFile extends ElementaryFile {
     private final short posCRT;
     private final short lenCRT;
 
-    private KeyPair keyPair = null;
+    private RSAPublicKey rsaPublicKey = null;
+    private RSAPrivateCrtKey rsaPrivateKey = null;
     private byte[] symmetricKey = null;
 
     public CRTKeyFile(short fileID, byte[] fileControlInformation, short pos, short len) {
@@ -63,22 +63,31 @@ public class CRTKeyFile extends ElementaryFile {
         if (symmetricKey != null) {
             symmetricKey = null;
         }
-        if (keyPair != null) {
-            keyPair.getPrivate().clearKey();
-            keyPair = null;
+        if (rsaPublicKey != null) {
+            rsaPublicKey.clearKey();
+            rsaPublicKey = null;
+        }
+        if (rsaPrivateKey != null) {
+            rsaPrivateKey.clearKey();
+            rsaPrivateKey = null;
         }
         if(JCSystem.isObjectDeletionSupported()) {
             JCSystem.requestObjectDeletion();
         }
     }
 
-    public void SaveKey(KeyPair kp) {
+    public void SaveKey(RSAPublicKey publicKey, RSAPrivateCrtKey privateKey) {
         clearContents();
-        keyPair = kp;
+        rsaPublicKey = publicKey;
+        rsaPrivateKey = privateKey;
     }
 
-    public KeyPair GetKey() {
-        return keyPair;
+    public RSAPublicKey GetPublicKey() {
+        return rsaPublicKey;
+    }
+
+    public RSAPrivateCrtKey GetPrivateKey() {
+        return rsaPrivateKey;
     }
 
     public void CheckUsage(byte operation, byte algRef) throws NotFoundException {
@@ -342,7 +351,8 @@ public class CRTKeyFile extends ElementaryFile {
             // If the key is usable, it MUST NOT remain in buf.
             Util.arrayFillNonAtomic(buffer, offset, length, (byte)0x00);
             clearContents();
-            this.keyPair = new KeyPair(rsaPuKey, rsaPrKey);
+            this.rsaPublicKey = rsaPuKey;
+            this.rsaPrivateKey = rsaPrKey;
             if(JCSystem.isObjectDeletionSupported()) {
                 JCSystem.requestObjectDeletion();
             }

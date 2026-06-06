@@ -283,7 +283,7 @@ public class GidsApplet extends Applet {
                     ISOException.throwIt(ISO7816.SW_DATA_INVALID);
                 }
                 file.CheckPermission(pinManager, File.ACL_OP_KEY_GETPUBLICKEY);
-                PublicKey pk = file.GetKey().getPublic();
+                PublicKey pk = file.GetPublicKey();
 
                 // Return pubkey. See ISO7816-8 table 3.
                 try {
@@ -463,7 +463,7 @@ public class GidsApplet extends Applet {
             }
             ISOException.throwIt(ISO7816.SW_UNKNOWN);
         }
-        file.SaveKey(kp);
+        file.SaveKey((RSAPublicKey) kp.getPublic(), (RSAPrivateCrtKey) kp.getPrivate());
 
         // Return pubkey. See ISO7816-8 table 3.
         try {
@@ -718,7 +718,7 @@ public class GidsApplet extends Applet {
         // Get the key - it must be an RSA private key,
         // checks have been done in MANAGE SECURITY ENVIRONMENT.
         CRTKeyFile key = (CRTKeyFile) currentKey[0];
-        PrivateKey theKey = key.GetKey().getPrivate();
+        PrivateKey theKey = key.GetPrivateKey();
 
         // Check the length of the cipher.
         // Note: The first byte of the data field is the padding indicator
@@ -767,7 +767,7 @@ public class GidsApplet extends Applet {
             lc = transmitManager.doChainingOrExtAPDU(apdu);
 
             // RSA signature operation.
-            rsaKey = key.GetKey().getPrivate();
+            rsaKey = key.GetPrivateKey();
 
             rsaRawCipher.init(rsaKey, Cipher.MODE_ENCRYPT);
             sigLen = rsaRawCipher.doFinal(ram_buf, (short) 0, lc, ram_buf, (short)0);
@@ -782,7 +782,7 @@ public class GidsApplet extends Applet {
             lc = apdu.setIncomingAndReceive();
 
             // RSA signature operation.
-            rsaKey = key.GetKey().getPrivate();
+            rsaKey = key.GetPrivateKey();
 
             if(lc > (short) 247) {
                 ISOException.throwIt(ISO7816.SW_WRONG_LENGTH);
